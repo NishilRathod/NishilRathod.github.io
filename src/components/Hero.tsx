@@ -2,7 +2,7 @@ import { profile } from "../content/profile";
 
 export function Hero() {
   return (
-    <header className="flex min-h-[88svh] flex-col justify-center py-20">
+    <header className="flex min-h-[90svh] flex-col justify-start pt-[18vh] pb-20 sm:pt-[20vh]">
       <p className="mb-6 font-mono text-xs tracking-[0.2em] text-accent uppercase">
         Portfolio
       </p>
@@ -19,7 +19,7 @@ export function Hero() {
 
       <a
         href="#work"
-        className="mt-16 inline-flex w-fit items-center gap-2 font-mono text-sm text-muted transition-colors hover:text-accent"
+        className="mt-auto inline-flex w-fit items-center gap-2 pt-16 font-mono text-sm text-muted transition-colors hover:text-accent"
       >
         scroll
         <span aria-hidden="true" className="motion-safe:animate-bounce">

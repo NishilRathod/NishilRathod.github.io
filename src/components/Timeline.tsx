@@ -5,34 +5,47 @@ import { Section } from "./Section";
 export function Timeline() {
   return (
     <Section index="02" title="Journey" id="journey">
-      <ol className="relative border-l border-hairline pl-8 sm:pl-10">
-        {journey.map((entry, i) => (
-          <Reveal as="li" key={`${entry.year}-${entry.title}`} delay={i * 60} className="block pb-12 last:pb-0">
-            <span
-              aria-hidden="true"
-              className="absolute -left-[4.5px] mt-2 size-2 rounded-full bg-accent ring-4 ring-bg"
-            />
+      {/*
+        Two columns per entry — a rail column and a content column — rather than
+        absolutely positioning the node against the list. `Reveal` applies a
+        transform, and a transformed element becomes the containing block for
+        its absolutely positioned descendants, which dragged the node on top of
+        the year. Flex has no such failure mode.
+      */}
+      <ol>
+        {journey.map((entry, i) => {
+          const isLast = i === journey.length - 1;
 
-            <p className="font-mono text-sm text-accent">{entry.year}</p>
+          return (
+            <li key={`${entry.year}-${entry.title}`} className="flex gap-5 sm:gap-6">
+              <div aria-hidden="true" className="flex w-2 shrink-0 flex-col items-center">
+                <span className="mt-2 size-2 shrink-0 rounded-full bg-accent" />
+                {isLast ? null : <span className="mt-2 w-px grow bg-hairline" />}
+              </div>
 
-            <h3 className="mt-2 text-lg font-medium">
-              {entry.href ? (
-                <a
-                  href={entry.href}
-                  target="_blank"
-                  rel="noreferrer noopener"
-                  className="underline-offset-4 hover:text-accent hover:underline"
-                >
-                  {entry.title}
-                </a>
-              ) : (
-                entry.title
-              )}
-            </h3>
+              <Reveal delay={i * 60} className={isLast ? "min-w-0" : "min-w-0 pb-12"}>
+                <p className="font-mono text-sm text-accent">{entry.year}</p>
 
-            <p className="mt-2 max-w-2xl leading-relaxed text-muted">{entry.body}</p>
-          </Reveal>
-        ))}
+                <h3 className="mt-2 text-lg font-medium">
+                  {entry.href ? (
+                    <a
+                      href={entry.href}
+                      target="_blank"
+                      rel="noreferrer noopener"
+                      className="underline-offset-4 hover:text-accent hover:underline"
+                    >
+                      {entry.title}
+                    </a>
+                  ) : (
+                    entry.title
+                  )}
+                </h3>
+
+                <p className="mt-2 max-w-2xl leading-relaxed text-muted">{entry.body}</p>
+              </Reveal>
+            </li>
+          );
+        })}
       </ol>
     </Section>
   );

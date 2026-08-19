@@ -55,6 +55,33 @@ describe("page content", () => {
     expect(rendered).toEqual(journey.map((entry) => entry.title));
   });
 
+  it("positions timeline nodes without absolute positioning", () => {
+    const { container } = render(<App />);
+
+    // Regression: the node used to be `absolute`, resolved against the nearest
+    // transformed ancestor. `Reveal` applies a transform, so the containing
+    // block became the <li> and the node landed on top of the year. Flex
+    // columns have no such dependency — keep it that way.
+    const positioned = container.querySelectorAll("#journey [class*='absolute']");
+    expect(positioned).toHaveLength(0);
+  });
+
+  it("draws a rail segment between entries but not after the last one", () => {
+    const { container } = render(<App />);
+
+    const items = container.querySelectorAll("#journey ol > li");
+    expect(items).toHaveLength(journey.length);
+
+    items.forEach((item, i) => {
+      const rail = item.querySelector("[class*='grow']");
+      if (i === journey.length - 1) {
+        expect(rail).toBeNull();
+      } else {
+        expect(rail).not.toBeNull();
+      }
+    });
+  });
+
   it("lists every skill in every group", () => {
     const { container } = render(<App />);
 
@@ -93,15 +120,36 @@ describe("contact details", () => {
     expect(link).toHaveAttribute("href", `mailto:${expected}`);
   });
 
-  it("links every social profile", () => {
+  it("gives every icon-only social link an accessible name", () => {
     render(<App />);
 
     for (const social of profile.socials) {
-      expect(screen.getByRole("link", { name: `${social.label} ↗` })).toHaveAttribute(
-        "href",
-        social.href,
-      );
+      // Icon links carry no text, so the name must come from aria-label —
+      // without it a screen reader announces nothing but "link".
+      const link = screen.getByRole("link", {
+        name: `${social.label} (opens in a new tab)`,
+      });
+      expect(link).toHaveAttribute("href", social.href);
+      expect(link.querySelector("svg")).not.toBeNull();
     }
+  });
+});
+
+describe("decorative backdrop", () => {
+  it("stays out of the accessibility tree and out of the way of clicks", () => {
+    const { container } = render(<App />);
+
+    const backdrop = container.querySelector("[class*='pointer-events-none'][aria-hidden='true']");
+    expect(backdrop).not.toBeNull();
+    expect((backdrop as HTMLElement).className).toContain("pointer-events-none");
+  });
+
+  it("renders motes deterministically", () => {
+    const first = render(<App />).container.querySelectorAll(".mote").length;
+    const second = render(<App />).container.querySelectorAll(".mote").length;
+
+    expect(first).toBeGreaterThan(0);
+    expect(second).toBe(first);
   });
 });
 

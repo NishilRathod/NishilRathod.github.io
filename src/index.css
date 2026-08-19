@@ -64,3 +64,36 @@
     }
   }
 }
+
+@layer components {
+  /* Motes in the backdrop, drifting from just below the fold to just above it.
+     Animates transform and opacity only, so it stays off the main thread. */
+  .mote {
+    opacity: 0;
+    will-change: transform;
+    animation: mote-drift var(--mote-duration, 40s) linear var(--mote-delay, 0s) infinite;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    /* The global reduced-motion rule collapses the duration, which would leave
+       the motes frozen mid-screen. Hide them outright instead. */
+    .mote {
+      display: none;
+    }
+  }
+}
+
+@keyframes mote-drift {
+  0% {
+    transform: translateY(0);
+    opacity: 0;
+  }
+  12%,
+  88% {
+    opacity: var(--mote-opacity, 0.4);
+  }
+  100% {
+    transform: translateY(-112vh);
+    opacity: 0;
+  }
+}
