@@ -90,6 +90,26 @@ and it needs an explicit go-ahead before any `git remote add` or `git push`.
   asserted against jsdom. Nishil needs to open `http://localhost:5173` and judge
   it, plus check 320px width, keyboard tabbing, and reduced-motion.
 
+## Verifying visually without the Chrome extension
+
+The Claude browser extension is not connected in this environment, but Chrome
+itself is, and headless mode works:
+
+```
+"/c/Program Files/Google/Chrome/Application/chrome.exe" --headless=new   --use-gl=angle --use-angle=swiftshader --enable-unsafe-swiftshader   --hide-scrollbars --virtual-time-budget=6000 --window-size=1440,900   --screenshot=out.png http://localhost:5173/
+```
+
+`--disable-gpu` must NOT be passed — it kills WebGL and the scene silently
+falls back. Two gotchas when screenshotting below the fold:
+
+- The hero uses `min-h-[90svh]`, so a tall window just stretches it. Screenshot
+  at a normal height and scroll instead.
+- Headless virtual time does not deliver IntersectionObserver callbacks, so
+  every scroll-reveal stays at opacity 0. A throwaway same-origin page in
+  `public/` that iframes `/` and injects a style forcing
+  `opacity:1 !important` works. **Delete it afterwards — anything in `public/`
+  ships.**
+
 ## Known compromises
 
 - `public/og.png` uses Georgia + Segoe UI, not the site's Fraunces + Geist.

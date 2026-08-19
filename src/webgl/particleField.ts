@@ -51,11 +51,11 @@ void main() {
   p.z += 3.0;
 
   float perspective = 1.0 / p.z;
-  vec2 ndc = p.xy * perspective * 1.75;
+  vec2 ndc = p.xy * perspective * 3.4;
   ndc.x *= uResolution.y / uResolution.x;
 
   gl_Position = vec4(ndc, 0.0, 1.0);
-  gl_PointSize = aSize * perspective * 105.0 * uPixelRatio;
+  gl_PointSize = aSize * perspective * 26.0 * uPixelRatio;
 
   // Near particles read brighter; far ones sink back into the page.
   vFade = clamp((perspective - 0.25) * 2.6, 0.0, 1.0);
@@ -73,21 +73,30 @@ void main() {
   float dist = length(offset);
   if (dist > 0.5) discard;
 
-  float alpha = smoothstep(0.5, 0.0, dist) * vFade * 0.55;
-  gl_FragColor = vec4(uColor, alpha);
+  float alpha = smoothstep(0.5, 0.0, dist) * vFade * 0.42;
+  gl_FragColor = vec4(uColor * alpha, alpha);
 }
 `;
 
+/** Surfaces the driver's own message. Silently returning null here turns every
+ *  shader typo into an invisible fallback, which is miserable to debug. */
+function fail(reason: string) {
+  if (import.meta.env.DEV) console.warn(`[backdrop] ${reason}`);
+  return null;
+}
+
 function compile(gl: WebGLRenderingContext, type: number, source: string) {
   const shader = gl.createShader(type);
-  if (!shader) return null;
+  if (!shader) return fail("could not create shader");
 
   gl.shaderSource(shader, source);
   gl.compileShader(shader);
 
   if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+    const log = gl.getShaderInfoLog(shader);
     gl.deleteShader(shader);
-    return null;
+    const kind = type === gl.VERTEX_SHADER ? "vertex" : "fragment";
+    return fail(`${kind} shader failed to compile: ${log}`);
   }
   return shader;
 }
@@ -98,7 +107,7 @@ function buildProgram(gl: WebGLRenderingContext) {
   if (!vertex || !fragment) return null;
 
   const program = gl.createProgram();
-  if (!program) return null;
+  if (!program) return fail("could not create program");
 
   gl.attachShader(program, vertex);
   gl.attachShader(program, fragment);
@@ -110,8 +119,9 @@ function buildProgram(gl: WebGLRenderingContext) {
   gl.deleteShader(fragment);
 
   if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+    const log = gl.getProgramInfoLog(program);
     gl.deleteProgram(program);
-    return null;
+    return fail(`program failed to link: ${log}`);
   }
   return program;
 }
@@ -152,10 +162,10 @@ export function startParticleField(canvas: HTMLCanvasElement, color: [number, nu
       depth: false,
       powerPreference: "low-power",
     }) as WebGLRenderingContext | null;
-  } catch {
-    return null;
+  } catch (error) {
+    return fail(`getContext threw: ${String(error)}`);
   }
-  if (!gl) return null;
+  if (!gl) return fail("no webgl context (getContext returned null)");
 
   const program = buildProgram(gl);
   if (!program) return null;
@@ -192,7 +202,7 @@ export function startParticleField(canvas: HTMLCanvasElement, color: [number, nu
   // Additive blending with no depth buffer: overlapping particles should
   // accumulate light rather than occlude one another.
   gl.enable(gl.BLEND);
-  gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
+  gl.blendFunc(gl.ONE, gl.ONE);
   gl.clearColor(0, 0, 0, 0);
 
   let pixelRatio = 1;
@@ -286,6 +296,12 @@ export function startParticleField(canvas: HTMLCanvasElement, color: [number, nu
     gl.deleteBuffer(sizeBuffer);
     gl.deleteBuffer(phaseBuffer);
     gl.deleteProgram(program);
-    gl.getExtension("WEBGL_lose_context")?.loseContext();
+
+    // Deliberately NOT calling WEBGL_lose_context.loseContext() here. Losing
+    // the context poisons the canvas permanently — a later getContext on the
+    // same element hands back the same dead context, where every call fails
+    // silently. StrictMode mounts, tears down, and remounts in development, so
+    // that turned the whole scene invisible. Deleting the resources is enough;
+    // the context goes when the canvas does.
   };
 }
