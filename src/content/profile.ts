@@ -22,9 +22,8 @@ export const profile: Profile = {
   tagline:
     "I build backend systems and the tools around them — caching layers, APIs, scrapers, and the occasional smart contract.",
 
-  // Deliberately does not claim "graduated" or "final year": the B.E. runs
-  // 2023–2026 and which side of it he is on has not been confirmed.
-  status: "Computer Engineering, A.P. Shah Institute of Technology · Mumbai, India",
+  status:
+    "B.E. Computer Engineering, A.P. Shah Institute of Technology · Class of 2026 · Mumbai, India",
 
   emailUser: "nishilrathod2512",
   emailDomain: "gmail.com",

@@ -35,4 +35,9 @@ export const journey: JourneyEntry[] = [
     title: "Building in the open",
     body: "AvaxGods in the spring, WeatherBoard through the summer — one pushing into smart contracts, the other into caching, rate limiting, and statistics. Both built to be read, not just to run.",
   },
+  {
+    year: "2026",
+    title: "Graduated",
+    body: "B.E. in Computer Engineering, finished at 8.33. Six years from the first day of the diploma to here, and the interesting part starts now.",
+  },
 ];
