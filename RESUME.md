@@ -68,9 +68,16 @@ These must not be invented. Record answers here as they arrive.
 
 ## Publishing
 
-**Nothing has been pushed.** The remote repo does not exist yet. Creating it
-makes Nishil's name, college, and links publicly indexable — that is his call,
-and it needs an explicit go-ahead before any `git remote add` or `git push`.
+**LIVE at https://nishilrathod.github.io/** since 2026-08-19.
+
+- Repo: `NishilRathod/NishilRathod.github.io`, public, default branch `main`.
+- Pages source is **GitHub Actions**, not the legacy branch build. GitHub
+  auto-enabled `build_type: legacy` when the repo was created, which would have
+  served the raw repo root instead of `dist/`. It was switched with
+  `gh api -X PUT repos/.../pages -f build_type=workflow`. Worth re-checking if
+  the live site ever shows source files instead of the app.
+- Every push to `main` redeploys. `npm test` gates the deploy, so a failing
+  test — including the phone-number check against `dist/` — blocks publishing.
 
 ## Notes / surprises
 
