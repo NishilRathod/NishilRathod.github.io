@@ -144,11 +144,19 @@ describe("decorative backdrop", () => {
     expect((backdrop as HTMLElement).className).toContain("pointer-events-none");
   });
 
-  it("renders motes deterministically", () => {
+  it("falls back to CSS motes when WebGL is unavailable", () => {
+    // jsdom has no WebGL, which is exactly the fallback path: no canvas should
+    // be left stranded on the page, and the motes take over.
+    const { container } = render(<App />);
+
+    expect(container.querySelectorAll(".mote").length).toBeGreaterThan(0);
+    expect(container.querySelector("canvas")).toBeNull();
+  });
+
+  it("renders the fallback deterministically", () => {
     const first = render(<App />).container.querySelectorAll(".mote").length;
     const second = render(<App />).container.querySelectorAll(".mote").length;
 
-    expect(first).toBeGreaterThan(0);
     expect(second).toBe(first);
   });
 });

@@ -1,10 +1,13 @@
+import { useEffect, useRef, useState } from "react";
+
+import { startParticleField } from "../webgl/particleField";
+
+/** The accent, #6b8cff, as linear 0–1 components for the shader. */
+const ACCENT_RGB: [number, number, number] = [0x6b / 255, 0x8c / 255, 0xff / 255];
+
 /**
- * Ambient depth behind the whole page: two soft accent blooms, plus motes that
- * drift slowly upward. Purely decorative — `aria-hidden` and non-interactive,
- * so it never reaches the accessibility tree or swallows a click.
- *
- * Values are a fixed list rather than randomised so every render, test and
- * build produces the same layout.
+ * CSS fallback for machines with no WebGL — a handful of motes drifting upward.
+ * Fixed values rather than random ones so every render is identical.
  */
 const MOTES = [
   { left: "6%", size: 3, duration: 34, delay: 0, opacity: 0.45 },
@@ -18,12 +21,34 @@ const MOTES = [
   { left: "93%", size: 3, duration: 36, delay: 14, opacity: 0.4 },
 ];
 
+/**
+ * Ambient depth behind the page: two soft accent blooms, with a rotating 3D
+ * particle field drawn over them in WebGL.
+ *
+ * Entirely decorative — aria-hidden and non-interactive, so it never reaches
+ * the accessibility tree or swallows a click.
+ */
 export function Backdrop() {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [useFallback, setUseFallback] = useState(false);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const teardown = startParticleField(canvas, ACCENT_RGB);
+    if (!teardown) {
+      // No WebGL — an old browser, a blocked context, or a headless test.
+      setUseFallback(true);
+      return;
+    }
+
+    return teardown;
+  }, []);
+
   return (
     <div aria-hidden="true" className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
       <div
-        // No blend mode: the wrapper's negative z-index makes it its own
-        // stacking context, so `mix-blend-screen` would blend against nothing.
         className="absolute inset-0 opacity-[0.13]"
         style={{
           background:
@@ -32,22 +57,26 @@ export function Backdrop() {
         }}
       />
 
-      {MOTES.map((mote) => (
-        <span
-          key={mote.left}
-          className="mote absolute top-full rounded-full bg-accent"
-          style={
-            {
-              left: mote.left,
-              width: `${mote.size}px`,
-              height: `${mote.size}px`,
-              "--mote-opacity": mote.opacity,
-              "--mote-duration": `${mote.duration}s`,
-              "--mote-delay": `${mote.delay}s`,
-            } as React.CSSProperties
-          }
-        />
-      ))}
+      {useFallback ? null : <canvas ref={canvasRef} className="absolute inset-0 size-full" />}
+
+      {useFallback
+        ? MOTES.map((mote) => (
+            <span
+              key={mote.left}
+              className="mote absolute top-full rounded-full bg-accent"
+              style={
+                {
+                  left: mote.left,
+                  width: `${mote.size}px`,
+                  height: `${mote.size}px`,
+                  "--mote-opacity": mote.opacity,
+                  "--mote-duration": `${mote.duration}s`,
+                  "--mote-delay": `${mote.delay}s`,
+                } as React.CSSProperties
+              }
+            />
+          ))
+        : null}
     </div>
   );
 }
