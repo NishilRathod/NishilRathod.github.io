@@ -1,0 +1,66 @@
+@import "tailwindcss";
+
+/* Variable fonts, self-hosted. Weight axis only — no italics are used, so the
+   italic files never ship. */
+@import "@fontsource-variable/geist/wght.css";
+@import "@fontsource-variable/geist-mono/wght.css";
+@import "@fontsource-variable/fraunces/wght.css";
+
+@theme {
+  --color-bg: #05070c;
+  --color-surface: #ffffff05;
+  --color-text: #eef2fb;
+  --color-muted: #9fb0c8;
+  --color-accent: #6b8cff;
+  --color-accent-tint: #6b8cff0f;
+  --color-live: #57d98a;
+  --color-alert: #ff3b30;
+  --color-hairline: #ffffff1a;
+
+  --font-sans: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Geist Mono Variable", ui-monospace, monospace;
+  --font-display: "Fraunces Variable", ui-serif, Georgia, serif;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--color-bg);
+    color: var(--color-text);
+    font-family: var(--font-sans);
+    font-synthesis-weight: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* One visible focus treatment for every interactive element. Never remove
+     it — keyboard users have no other way to tell where they are. */
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+
+  ::selection {
+    background-color: var(--color-accent);
+    color: var(--color-bg);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
