@@ -95,8 +95,6 @@ export type Frame = {
   /** Eased cursor position in −1…1, or (0, 0) when there is no cursor. */
   pointerX: number;
   pointerY: number;
-  /** 1 while the hero fills the viewport, falling to 0 as it scrolls away. */
-  heroFade: number;
   /** Accent colour for this frame, as linear 0–1 components. */
   color: [number, number, number];
   width: number;

@@ -11,7 +11,7 @@
  */
 
 import type { Frame, Layer } from "./gl";
-import { createHeroForm } from "./heroForm";
+import { createIcosahedron } from "./icosahedron";
 import { createParticleField } from "./particleField";
 
 /** Retina is worth it; past 2x it is invisible and costs fill rate. */
@@ -88,7 +88,7 @@ export function startScene(canvas: HTMLCanvasElement, accent: [number, number, n
   }
 
   const layers: Layer[] = [];
-  for (const create of [createParticleField, createHeroForm]) {
+  for (const create of [createParticleField, createIcosahedron]) {
     const layer = create(gl);
     // A layer that failed to build has already explained itself. Keep whatever
     // else compiled rather than losing the whole backdrop to one bad shader.
@@ -109,7 +109,6 @@ export function startScene(canvas: HTMLCanvasElement, accent: [number, number, n
 
   let pixelRatio = 1;
   let scroll = 0;
-  let heroFade = 1;
   let pointerTargetX = 0;
   let pointerTargetY = 0;
   let pointerX = 0;
@@ -118,13 +117,6 @@ export function startScene(canvas: HTMLCanvasElement, accent: [number, number, n
   const readScroll = () => {
     const scrollable = document.documentElement.scrollHeight - window.innerHeight;
     scroll = scrollable > 0 ? clamp01(window.scrollY / scrollable) : 0;
-
-    // Measured off the real header so the fade stays in step if the hero's
-    // height changes; `min-h-[90svh]` is the fallback.
-    const heroHeight =
-      document.querySelector("header")?.getBoundingClientRect().height ||
-      window.innerHeight * 0.9;
-    heroFade = 1 - clamp01(window.scrollY / heroHeight);
   };
 
   const resize = () => {
@@ -141,15 +133,13 @@ export function startScene(canvas: HTMLCanvasElement, accent: [number, number, n
 
   const draw = (seconds: number) => {
     // Scroll parallax is exactly the kind of motion a reduced-motion visitor
-    // asked not to see, so the scene reads a scroll of zero for them. The hero
-    // fade still applies — otherwise the hero's geometry would hang over the
-    // rest of the page forever.
+    // asked not to see, so the scene reads a scroll of zero for them and holds
+    // whatever the first frame drew.
     const frame: Frame = {
       time: seconds,
       scroll: reducedMotion ? 0 : scroll,
       pointerX,
       pointerY,
-      heroFade,
       color: hslToRgb({
         ...accentHsl,
         h: (accentHsl.h + (reducedMotion ? 0 : scroll) * HUE_DRIFT + 360) % 360,
@@ -205,11 +195,6 @@ export function startScene(canvas: HTMLCanvasElement, accent: [number, number, n
     });
   };
 
-  const onScroll = () => {
-    readScroll();
-    if (reducedMotion) redrawStill();
-  };
-
   const onPointerMove = (event: PointerEvent) => {
     // Coarse pointers report a position on tap, which would yank the scene
     // sideways on every touch. Only a real cursor gets to steer.
@@ -237,7 +222,9 @@ export function startScene(canvas: HTMLCanvasElement, accent: [number, number, n
   canvas.addEventListener("webglcontextlost", onContextLost);
   document.addEventListener("visibilitychange", onVisibility);
   window.addEventListener("resize", onResize);
-  window.addEventListener("scroll", onScroll, { passive: true });
+  // Under reduced motion the scene reads a scroll of zero, so tracking the
+  // scroll position would change nothing that gets drawn.
+  if (!reducedMotion) window.addEventListener("scroll", readScroll, { passive: true });
   if (!reducedMotion) window.addEventListener("pointermove", onPointerMove, { passive: true });
 
   readScroll();
@@ -257,7 +244,7 @@ export function startScene(canvas: HTMLCanvasElement, accent: [number, number, n
     canvas.removeEventListener("webglcontextlost", onContextLost);
     document.removeEventListener("visibilitychange", onVisibility);
     window.removeEventListener("resize", onResize);
-    window.removeEventListener("scroll", onScroll);
+    window.removeEventListener("scroll", readScroll);
     window.removeEventListener("pointermove", onPointerMove);
 
     for (const layer of layers) layer.dispose();

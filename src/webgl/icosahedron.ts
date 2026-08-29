@@ -1,17 +1,17 @@
 /**
- * A wireframe icosahedron sitting beside the hero, dissolving as it scrolls
- * away.
+ * A wireframe icosahedron, held in the corner of the viewport for the whole
+ * page.
  *
  * Crisp geometry against the particle cloud's soft blur is the point: the cloud
  * gives the page depth, but only an edged solid reads unambiguously as a 3D
  * object. It leans further toward the cursor than the cloud does, because this
  * is the thing that should feel touchable.
+ *
+ * It turns on its own clock and scrolling adds to that turn, so the object is
+ * never still and never merely pinned to the glass.
  */
 
 import { buildProgram, createAttribute, useAttributes, type Frame, type Layer } from "./gl";
-
-/** Below this the hero is gone and there is nothing left to draw. */
-const FADE_FLOOR = 0.01;
 
 /** Viewport width, in CSS pixels, under which the text column fills the page
  *  and the form has to move behind it. Matches Tailwind's `sm` breakpoint. */
@@ -89,6 +89,7 @@ uniform float uTime;
 uniform vec2 uResolution;
 uniform float uPixelRatio;
 uniform vec2 uPointer;
+uniform float uScroll;
 uniform vec2 uOffset;
 uniform float uScale;
 uniform float uPointSize;
@@ -107,8 +108,12 @@ mat3 rotateX(float a) {
 
 void main() {
   // Turns the opposite way to the cloud, and slower, so the two never lock
-  // into a shared rhythm.
-  vec3 p = rotateY(uTime * -0.09) * rotateX(0.42 + sin(uTime * 0.06) * 0.14) * aPosition;
+  // into a shared rhythm. Scroll adds to the turn — again against the cloud —
+  // so moving down the page visibly drives it rather than just sliding past.
+  vec3 p =
+    rotateY(uTime * -0.11 - uScroll * 1.6) *
+    rotateX(0.42 + sin(uTime * 0.06) * 0.14 + uScroll * 0.5) *
+    aPosition;
 
   // A far stronger lean than the cloud gets: this is the object the cursor is
   // meant to feel connected to.
@@ -137,7 +142,7 @@ void main() {
 }
 `;
 
-export function createHeroForm(gl: WebGLRenderingContext): Layer | null {
+export function createIcosahedron(gl: WebGLRenderingContext): Layer | null {
   const program = buildProgram(gl, VERTEX_SHADER, FRAGMENT_SHADER);
   if (!program) return null;
 
@@ -151,6 +156,7 @@ export function createHeroForm(gl: WebGLRenderingContext): Layer | null {
   const uResolution = gl.getUniformLocation(program, "uResolution");
   const uPixelRatio = gl.getUniformLocation(program, "uPixelRatio");
   const uPointer = gl.getUniformLocation(program, "uPointer");
+  const uScroll = gl.getUniformLocation(program, "uScroll");
   const uOffset = gl.getUniformLocation(program, "uOffset");
   const uScale = gl.getUniformLocation(program, "uScale");
   const uPointSize = gl.getUniformLocation(program, "uPointSize");
@@ -159,10 +165,6 @@ export function createHeroForm(gl: WebGLRenderingContext): Layer | null {
 
   return {
     draw(frame: Frame) {
-      // Nothing of the hero is left on screen; skip the draw entirely rather
-      // than blend thirty invisible lines.
-      if (frame.heroFade < FADE_FLOOR) return;
-
       const narrow = frame.width / frame.pixelRatio < NARROW;
 
       gl.useProgram(program);
@@ -171,29 +173,33 @@ export function createHeroForm(gl: WebGLRenderingContext): Layer | null {
       gl.uniform2f(uResolution, frame.width, frame.height);
       gl.uniform1f(uPixelRatio, frame.pixelRatio);
       gl.uniform2f(uPointer, frame.pointerX, frame.pointerY);
+      gl.uniform1f(uScroll, frame.scroll);
       gl.uniform3f(uColor, frame.color[0], frame.color[1], frame.color[2]);
 
-      // On a wide screen it sits in the empty upper right, clear of the text
-      // column. On a narrow one the column fills the width, so it moves behind
-      // the text and drops back to being texture.
+      // On a wide screen it sits in the upper right, tucked past the edge of
+      // the text column. On a narrow one the column fills the width, so it
+      // moves behind the text and drops back to being texture.
       //
       // Note the aspect correction in the vertex shader squeezes x, so the
       // horizontal radius comes out around 0.64x the vertical one — the form is
       // narrower on screen than uScale alone suggests.
-      gl.uniform2f(uOffset, narrow ? 0 : 0.62, narrow ? 0.08 : 0.2);
-      gl.uniform1f(uScale, narrow ? 0.3 : 0.32);
+      gl.uniform2f(uOffset, narrow ? 0 : 0.68, narrow ? 0.08 : 0.2);
+      gl.uniform1f(uScale, narrow ? 0.28 : 0.3);
 
-      const dim = narrow ? 0.35 : 1;
+      // It is on screen for the whole page now rather than just the hero, so it
+      // sits back further than it used to — especially on a narrow viewport,
+      // where it has body copy in front of it the entire way down.
+      const dim = narrow ? 0.22 : 1;
 
       // gl.lineWidth is clamped to 1 on virtually every driver, so the edges
       // carry their weight through opacity instead of thickness.
-      gl.uniform1f(uAlpha, 0.22 * frame.heroFade * dim);
+      gl.uniform1f(uAlpha, 0.2 * dim);
       useAttributes(gl, [lineAttribute]);
       gl.drawArrays(gl.LINES, 0, lineVertexCount);
 
       // Brighter dots at the corners, to give the wireframe joints.
       gl.uniform1f(uPointSize, 2.2);
-      gl.uniform1f(uAlpha, 0.5 * frame.heroFade * dim);
+      gl.uniform1f(uAlpha, 0.45 * dim);
       useAttributes(gl, [pointAttribute]);
       gl.drawArrays(gl.POINTS, 0, pointCount);
     },
