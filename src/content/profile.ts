@@ -19,8 +19,7 @@ export const profile: Profile = {
   name: "Nishil Rathod",
 
   // DRAFT — rewrite in Nishil's own voice before publishing.
-  tagline:
-    "I build backend systems and the tools around them — caching layers, APIs, scrapers, and the occasional smart contract.",
+  tagline: "I build backend systems and the tools around them.",
 
   status:
     "B.E. Computer Engineering, A.P. Shah Institute of Technology · Class of 2026 · Mumbai, India",
