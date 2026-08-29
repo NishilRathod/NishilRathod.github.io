@@ -26,32 +26,51 @@ const LINE_WIDTH = 1.6;
  *  and the forms have to move behind it. Matches Tailwind's `sm` breakpoint. */
 const NARROW = 640;
 
-/** One drawn copy of the solid. */
-type Instance = {
-  /** Position in clip space, where the viewport is −1…1 on both axes. */
-  offset: [number, number];
-  scale: number;
-  /** Offsets the rotation clock so the copies are never mirror images. */
+/**
+ * How a copy moves. Independent of where it sits, so the two copies keep their
+ * own character across breakpoints.
+ */
+type Character = {
+  /** Offsets the rotation clock, so the copies are never in step. */
   phase: number;
+  /**
+   * Multiplies the yaw and pitch rates. Deliberately fixed rather than
+   * randomised per load: random directions can land close together, which is
+   * the one outcome worth ruling out — these two must never look like one
+   * object mirrored.
+   */
+  spin: [number, number];
   /** Multiplies alpha, to sit one copy further back than the other. */
   dim: number;
 };
 
-/**
- * Two copies, the left one lower, smaller, and a little dimmer, so the pair
- * reads as depth rather than as a symmetrical frame around the text.
- */
-const WIDE: Instance[] = [
-  { offset: [0.68, 0.2], scale: 0.3, phase: 0, dim: 1 },
-  { offset: [-0.75, -0.1], scale: 0.26, phase: 2.1, dim: 0.8 },
+/** The right copy turns one way, the left the other, slower, and pitching
+ *  against it as you scroll. */
+const CHARACTERS: Character[] = [
+  { phase: 0, spin: [-1, 1], dim: 1 },
+  { phase: 2.1, spin: [0.78, -1.2], dim: 0.8 },
+];
+
+/** Where a copy sits, in clip space, where the viewport is −1…1 on both axes. */
+type Placement = { offset: [number, number]; scale: number };
+
+/** Right copy high, left copy low, so the pair reads as depth rather than as a
+ *  symmetrical frame around the text. Both clear of the text column. */
+const WIDE: Placement[] = [
+  { offset: [0.68, 0.32], scale: 0.3 },
+  { offset: [-0.75, -0.26], scale: 0.26 },
 ];
 
 /** On a narrow screen the text column fills the width, so both copies sit
- *  partly off the edges and drop right back to being texture. */
-const NARROW_INSTANCES: Instance[] = [
-  { offset: [0.52, 0.16], scale: 0.26, phase: 0, dim: 0.22 },
-  { offset: [-0.52, -0.14], scale: 0.23, phase: 2.1, dim: 0.2 },
+ *  partly off the edges. */
+const NARROW_PLACEMENT: Placement[] = [
+  { offset: [0.52, 0.28], scale: 0.26 },
+  { offset: [-0.52, -0.3], scale: 0.23 },
 ];
+
+/** Extra knock-down for the narrow layout, where the copies have body copy in
+ *  front of them the whole way down rather than just across the hero. */
+const NARROW_DIM = 0.22;
 
 /**
  * The twelve vertices of an icosahedron: three mutually perpendicular golden
@@ -155,6 +174,7 @@ uniform float uScroll;
 uniform vec2 uOffset;
 uniform float uScale;
 uniform float uPhase;
+uniform vec2 uSpin;
 
 mat3 rotateY(float a) {
   float s = sin(a);
@@ -170,13 +190,14 @@ mat3 rotateX(float a) {
 
 /** Model space to eye space. */
 vec3 place(vec3 position) {
-  // Turns the opposite way to the cloud, and slower, so the two never lock
-  // into a shared rhythm. Scroll adds to the turn — again against the cloud —
-  // so moving down the page visibly drives it rather than just sliding past.
-  vec3 p =
-    rotateY(uTime * -0.11 - uScroll * 1.6 + uPhase) *
-    rotateX(0.42 + sin(uTime * 0.06 + uPhase) * 0.14 + uScroll * 0.5) *
-    position;
+  // Each copy turns on its own clock and its own direction, so they never lock
+  // into a shared rhythm — with each other or with the cloud. Scroll adds to
+  // the turn, so moving down the page visibly drives them rather than just
+  // sliding past.
+  float yaw = (uTime * 0.11 + uScroll * 1.6) * uSpin.x + uPhase;
+  float pitch = 0.42 + sin(uTime * 0.06 + uPhase) * 0.14 + uScroll * 0.5 * uSpin.y;
+
+  vec3 p = rotateY(yaw) * rotateX(pitch) * position;
 
   // A far stronger lean than the cloud gets: this is the object the cursor is
   // meant to feel connected to.
@@ -276,6 +297,7 @@ function commonUniforms(gl: WebGLRenderingContext, program: WebGLProgram) {
     offset: gl.getUniformLocation(program, "uOffset"),
     scale: gl.getUniformLocation(program, "uScale"),
     phase: gl.getUniformLocation(program, "uPhase"),
+    spin: gl.getUniformLocation(program, "uSpin"),
     color: gl.getUniformLocation(program, "uColor"),
     alpha: gl.getUniformLocation(program, "uAlpha"),
   };
@@ -307,17 +329,23 @@ export function createIcosahedron(gl: WebGLRenderingContext): Layer | null {
   return {
     draw(frame: Frame) {
       const narrow = frame.width / frame.pixelRatio < NARROW;
-      const instances = narrow ? NARROW_INSTANCES : WIDE;
+      const placements = narrow ? NARROW_PLACEMENT : WIDE;
+      const breakpointDim = narrow ? NARROW_DIM : 1;
 
-      const setShared = (u: ReturnType<typeof commonUniforms>, instance: Instance) => {
+      const setShared = (
+        u: ReturnType<typeof commonUniforms>,
+        character: Character,
+        placement: Placement,
+      ) => {
         gl.uniform1f(u.time, frame.time);
         gl.uniform2f(u.resolution, frame.width, frame.height);
         gl.uniform2f(u.pointer, frame.pointerX, frame.pointerY);
         gl.uniform1f(u.scroll, frame.scroll);
         gl.uniform3f(u.color, frame.color[0], frame.color[1], frame.color[2]);
-        gl.uniform2f(u.offset, instance.offset[0], instance.offset[1]);
-        gl.uniform1f(u.scale, instance.scale);
-        gl.uniform1f(u.phase, instance.phase);
+        gl.uniform2f(u.offset, placement.offset[0], placement.offset[1]);
+        gl.uniform1f(u.scale, placement.scale);
+        gl.uniform1f(u.phase, character.phase);
+        gl.uniform2f(u.spin, character.spin[0], character.spin[1]);
       };
 
       // Clip space spans 2 units over the canvas height, so a half-width of W
@@ -327,22 +355,22 @@ export function createIcosahedron(gl: WebGLRenderingContext): Layer | null {
       gl.useProgram(lineProgram);
       useAttributes(gl, lineAttributes);
       gl.uniform1f(uHalfWidth, halfWidth);
-      for (const instance of instances) {
-        setShared(lineUniforms, instance);
-        gl.uniform1f(lineUniforms.alpha, 0.34 * instance.dim);
+      CHARACTERS.forEach((character, i) => {
+        setShared(lineUniforms, character, placements[i]);
+        gl.uniform1f(lineUniforms.alpha, 0.34 * character.dim * breakpointDim);
         gl.drawArrays(gl.TRIANGLES, 0, quadVertexCount);
-      }
+      });
 
       // Brighter dots at the corners, to give the wireframe joints.
       gl.useProgram(pointProgram);
       useAttributes(gl, pointAttributes);
       gl.uniform1f(uPixelRatio, frame.pixelRatio);
       gl.uniform1f(uPointSize, 3.4);
-      for (const instance of instances) {
-        setShared(pointUniforms, instance);
-        gl.uniform1f(pointUniforms.alpha, 0.7 * instance.dim);
+      CHARACTERS.forEach((character, i) => {
+        setShared(pointUniforms, character, placements[i]);
+        gl.uniform1f(pointUniforms.alpha, 0.7 * character.dim * breakpointDim);
         gl.drawArrays(gl.POINTS, 0, pointCount);
-      }
+      });
     },
 
     dispose() {
