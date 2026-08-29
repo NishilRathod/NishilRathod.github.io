@@ -8,7 +8,7 @@ export function Work() {
     <Section index="01" title="Work" id="work">
       <div className="space-y-6">
         {projects.map((project, i) => (
-          <Reveal as="div" key={project.name} delay={i * 80}>
+          <Reveal key={project.name} delay={i * 80} variant="lift">
             <ProjectCard project={project} />
           </Reveal>
         ))}
@@ -23,7 +23,7 @@ export function Work() {
                 href={contribution.href}
                 target="_blank"
                 rel="noreferrer noopener"
-                className="font-mono text-accent underline-offset-4 hover:underline"
+                className="link-wipe font-mono text-accent"
               >
                 {contribution.name}
               </a>

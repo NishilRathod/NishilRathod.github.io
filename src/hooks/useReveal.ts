@@ -1,8 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 
-const prefersReducedMotion = () =>
-  typeof window !== "undefined" &&
-  window.matchMedia?.("(prefers-reduced-motion: reduce)").matches === true;
+import { prefersReducedMotion } from "../lib/motion";
 
 const canObserve = () =>
   typeof window !== "undefined" && typeof window.IntersectionObserver === "function";
@@ -17,6 +15,11 @@ const canObserve = () =>
 export function useReveal<T extends HTMLElement>() {
   const ref = useRef<T>(null);
   const [revealed, setRevealed] = useState(() => !(canObserve() && !prefersReducedMotion()));
+
+  // Whether the very first render was already visible. Callers use this to skip
+  // entrance animations outright rather than playing one from a state the
+  // element was never actually in.
+  const [startedRevealed] = useState(revealed);
 
   useEffect(() => {
     if (revealed) return;
@@ -40,5 +43,5 @@ export function useReveal<T extends HTMLElement>() {
     return () => observer.disconnect();
   }, [revealed]);
 
-  return { ref, revealed };
+  return { ref, revealed, startedRevealed };
 }

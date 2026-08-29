@@ -66,6 +66,26 @@
 }
 
 @layer components {
+  /* Underline that wipes in from the left instead of appearing all at once.
+     Drawn as a background gradient rather than a pseudo-element so it survives
+     a link wrapping across two lines, which an absolutely positioned bar on an
+     inline element does not. */
+  .link-wipe {
+    padding-bottom: 0.12em;
+    background-image: linear-gradient(currentColor, currentColor);
+    background-repeat: no-repeat;
+    background-position: 0 100%;
+    background-size: 0% 1px;
+    transition:
+      background-size 250ms cubic-bezier(0.16, 1, 0.3, 1),
+      color 150ms ease;
+  }
+
+  .link-wipe:hover,
+  .link-wipe:focus-visible {
+    background-size: 100% 1px;
+  }
+
   /* Motes in the backdrop, drifting from just below the fold to just above it.
      Animates transform and opacity only, so it stays off the main thread. */
   .mote {

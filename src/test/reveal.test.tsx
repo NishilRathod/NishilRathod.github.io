@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import { act } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -17,6 +17,27 @@ class MockIntersectionObserver {
   unobserve() {}
 }
 
+/**
+ * Content Motion is currently holding at zero opacity.
+ *
+ * Checked through the style object rather than a `[style*="opacity: 0"]`
+ * selector, because that substring also matches the backdrop motes'
+ * `--mote-opacity: 0.45` custom property and would report false positives.
+ *
+ * Decoration is excluded: the timeline's node rings animate *to* zero opacity
+ * by design, so counting them would both fail the guarantee spuriously and make
+ * the result depend on when the assertion happened to sample. What matters is
+ * that nothing a reader needs is stuck invisible.
+ */
+const hiddenIn = (root: HTMLElement) =>
+  [...root.querySelectorAll<HTMLElement>("[style]")].filter(
+    (el) => el.style.opacity === "0" && !el.closest('[aria-hidden="true"]'),
+  );
+
+/** The scroll-revealed content. The hero is excluded deliberately — it plays a
+ *  fixed-duration entrance on mount and never consults an observer. */
+const mainOf = (container: HTMLElement) => container.querySelector<HTMLElement>("#main")!;
+
 describe("scroll reveal", () => {
   beforeEach(() => {
     callbacks.length = 0;
@@ -27,18 +48,20 @@ describe("scroll reveal", () => {
     vi.unstubAllGlobals();
   });
 
-  it("starts hidden, then reveals once the observer reports intersection", () => {
+  it("starts hidden, then reveals once the observer reports intersection", async () => {
     const { container } = render(<App />);
 
     // Before intersecting, revealed content is transparent.
-    expect(container.querySelectorAll("[class*='opacity-0']").length).toBeGreaterThan(0);
+    expect(hiddenIn(mainOf(container)).length).toBeGreaterThan(0);
 
     act(() => {
       for (const callback of callbacks) callback([{ isIntersecting: true }]);
     });
 
-    expect(container.querySelectorAll("[class*='opacity-0']")).toHaveLength(0);
-    expect(container.querySelectorAll("[class*='opacity-100']").length).toBeGreaterThan(0);
+    // A class swap would land synchronously; a tween takes real time. The
+    // slowest here is the 0.6s reveal plus a 0.24s stagger, so wait for it to
+    // finish rather than sampling it mid-flight.
+    await waitFor(() => expect(hiddenIn(mainOf(container))).toHaveLength(0), { timeout: 4000 });
   });
 
   it("renders visible from the start when motion is reduced", () => {
@@ -51,9 +74,10 @@ describe("scroll reveal", () => {
 
     const { container } = render(<App />);
 
-    // Nothing may depend on an observer firing: a reduced-motion visitor must
-    // see the whole page immediately.
-    expect(container.querySelectorAll("[class*='opacity-0']")).toHaveLength(0);
+    // Nothing may depend on an observer firing, and nothing may fade in either:
+    // a reduced-motion visitor must see the whole page immediately, hero
+    // included.
+    expect(hiddenIn(container)).toHaveLength(0);
     expect(screen.getByRole("heading", { name: "Journey", level: 2 })).toBeVisible();
   });
 
@@ -63,6 +87,6 @@ describe("scroll reveal", () => {
     const { container } = render(<App />);
 
     // Failing closed here would leave the page permanently blank.
-    expect(container.querySelectorAll("[class*='opacity-0']")).toHaveLength(0);
+    expect(hiddenIn(mainOf(container))).toHaveLength(0);
   });
 });

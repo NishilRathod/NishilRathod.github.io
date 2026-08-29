@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 
-import { startParticleField } from "../webgl/particleField";
+import { startScene } from "../webgl/scene";
 
 /** The accent, #6b8cff, as linear 0–1 components for the shader. */
 const ACCENT_RGB: [number, number, number] = [0x6b / 255, 0x8c / 255, 0xff / 255];
@@ -22,8 +22,10 @@ const MOTES = [
 ];
 
 /**
- * Ambient depth behind the page: two soft accent blooms, with a rotating 3D
- * particle field drawn over them in WebGL.
+ * Ambient depth behind the page: two soft accent blooms, with a WebGL scene
+ * drawn over them — a rotating particle field that responds to scroll and
+ * cursor, plus a wireframe icosahedron beside the hero that dissolves as the
+ * hero scrolls away.
  *
  * Entirely decorative — aria-hidden and non-interactive, so it never reaches
  * the accessibility tree or swallows a click.
@@ -36,7 +38,7 @@ export function Backdrop() {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const teardown = startParticleField(canvas, ACCENT_RGB);
+    const teardown = startScene(canvas, ACCENT_RGB);
     if (!teardown) {
       // No WebGL — an old browser, a blocked context, or a headless test.
       setUseFallback(true);

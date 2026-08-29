@@ -1,19 +1,18 @@
 /**
  * A rotating 3D particle field, rendered with raw WebGL.
  *
- * No three.js: the whole scene is a single draw call of gl.POINTS, so pulling
+ * No three.js: the whole layer is a single draw call of gl.POINTS, so pulling
  * in a scene graph would cost roughly 150 kB gzipped to do less than this file
  * does. The depth is real — points are perspective-projected, and both their
  * size and their opacity fall off with distance.
  *
- * Returns a teardown function, or null when WebGL is unavailable, so the caller
- * can fall back to something else.
+ * Scroll pushes the cloud past the camera and turns it, so the page reads as
+ * descending *through* the field rather than scrolling past a picture of one.
  */
 
-const PARTICLE_COUNT = 800;
+import { buildProgram, createAttribute, useAttributes, type Frame, type Layer } from "./gl";
 
-/** Retina is worth it; past 2x it is invisible and costs fill rate. */
-const MAX_PIXEL_RATIO = 2;
+const PARTICLE_COUNT = 800;
 
 const VERTEX_SHADER = `
 attribute vec3 aPosition;
@@ -23,6 +22,8 @@ attribute float aPhase;
 uniform float uTime;
 uniform vec2 uResolution;
 uniform float uPixelRatio;
+uniform float uScroll;
+uniform vec2 uPointer;
 
 varying float vFade;
 
@@ -45,7 +46,14 @@ void main() {
   p.y += sin(uTime * 0.15 + aPhase) * 0.07;
   p.x += cos(uTime * 0.11 + aPhase) * 0.05;
 
-  p = rotateY(uTime * 0.055) * rotateX(sin(uTime * 0.037) * 0.28) * p;
+  // Scrolling lifts the cloud past the camera and adds to its rotation.
+  p.y += uScroll * 1.6;
+
+  p = rotateY(uTime * 0.055 + uScroll * 0.9) * rotateX(sin(uTime * 0.037) * 0.28) * p;
+
+  // A slight lean toward the cursor. Small enough to read as parallax rather
+  // than as the background chasing the mouse.
+  p = rotateY(uPointer.x * 0.12) * rotateX(uPointer.y * -0.09) * p;
 
   // Push the cloud down the +z axis so the divisor stays comfortably positive.
   p.z += 3.0;
@@ -78,54 +86,6 @@ void main() {
 }
 `;
 
-/** Surfaces the driver's own message. Silently returning null here turns every
- *  shader typo into an invisible fallback, which is miserable to debug. */
-function fail(reason: string) {
-  if (import.meta.env.DEV) console.warn(`[backdrop] ${reason}`);
-  return null;
-}
-
-function compile(gl: WebGLRenderingContext, type: number, source: string) {
-  const shader = gl.createShader(type);
-  if (!shader) return fail("could not create shader");
-
-  gl.shaderSource(shader, source);
-  gl.compileShader(shader);
-
-  if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-    const log = gl.getShaderInfoLog(shader);
-    gl.deleteShader(shader);
-    const kind = type === gl.VERTEX_SHADER ? "vertex" : "fragment";
-    return fail(`${kind} shader failed to compile: ${log}`);
-  }
-  return shader;
-}
-
-function buildProgram(gl: WebGLRenderingContext) {
-  const vertex = compile(gl, gl.VERTEX_SHADER, VERTEX_SHADER);
-  const fragment = compile(gl, gl.FRAGMENT_SHADER, FRAGMENT_SHADER);
-  if (!vertex || !fragment) return null;
-
-  const program = gl.createProgram();
-  if (!program) return fail("could not create program");
-
-  gl.attachShader(program, vertex);
-  gl.attachShader(program, fragment);
-  gl.linkProgram(program);
-
-  // They are linked into the program now; the shader objects themselves are no
-  // longer needed.
-  gl.deleteShader(vertex);
-  gl.deleteShader(fragment);
-
-  if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-    const log = gl.getProgramInfoLog(program);
-    gl.deleteProgram(program);
-    return fail(`program failed to link: ${log}`);
-  }
-  return program;
-}
-
 /**
  * Distributes particles through a sphere rather than a cube, so the cloud has
  * no visible corners as it turns.
@@ -151,157 +111,44 @@ function buildGeometry() {
   return { positions, sizes, phases };
 }
 
-export function startParticleField(canvas: HTMLCanvasElement, color: [number, number, number]) {
-  // getContext can throw rather than return null — jsdom does, and so do some
-  // browsers when the context is blocked or the GPU is blacklisted.
-  let gl: WebGLRenderingContext | null = null;
-  try {
-    gl = canvas.getContext("webgl", {
-      alpha: true,
-      antialias: true,
-      depth: false,
-      powerPreference: "low-power",
-    }) as WebGLRenderingContext | null;
-  } catch (error) {
-    return fail(`getContext threw: ${String(error)}`);
-  }
-  if (!gl) return fail("no webgl context (getContext returned null)");
-
-  const program = buildProgram(gl);
+export function createParticleField(gl: WebGLRenderingContext): Layer | null {
+  const program = buildProgram(gl, VERTEX_SHADER, FRAGMENT_SHADER);
   if (!program) return null;
 
   const { positions, sizes, phases } = buildGeometry();
 
-  const positionBuffer = gl.createBuffer();
-  const sizeBuffer = gl.createBuffer();
-  const phaseBuffer = gl.createBuffer();
-
-  const bind = (
-    buffer: WebGLBuffer | null,
-    data: Float32Array,
-    name: string,
-    components: number,
-  ) => {
-    const location = gl.getAttribLocation(program, name);
-    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-    gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
-    gl.enableVertexAttribArray(location);
-    gl.vertexAttribPointer(location, components, gl.FLOAT, false, 0, 0);
-  };
-
   gl.useProgram(program);
-  bind(positionBuffer, positions, "aPosition", 3);
-  bind(sizeBuffer, sizes, "aSize", 1);
-  bind(phaseBuffer, phases, "aPhase", 1);
+  const attributes = [
+    createAttribute(gl, program, "aPosition", positions, 3),
+    createAttribute(gl, program, "aSize", sizes, 1),
+    createAttribute(gl, program, "aPhase", phases, 1),
+  ];
 
   const uTime = gl.getUniformLocation(program, "uTime");
   const uResolution = gl.getUniformLocation(program, "uResolution");
   const uPixelRatio = gl.getUniformLocation(program, "uPixelRatio");
+  const uScroll = gl.getUniformLocation(program, "uScroll");
+  const uPointer = gl.getUniformLocation(program, "uPointer");
   const uColor = gl.getUniformLocation(program, "uColor");
 
-  // Additive blending with no depth buffer: overlapping particles should
-  // accumulate light rather than occlude one another.
-  gl.enable(gl.BLEND);
-  gl.blendFunc(gl.ONE, gl.ONE);
-  gl.clearColor(0, 0, 0, 0);
+  return {
+    draw(frame: Frame) {
+      gl.useProgram(program);
+      useAttributes(gl, attributes);
 
-  let pixelRatio = 1;
+      gl.uniform1f(uTime, frame.time);
+      gl.uniform2f(uResolution, frame.width, frame.height);
+      gl.uniform1f(uPixelRatio, frame.pixelRatio);
+      gl.uniform1f(uScroll, frame.scroll);
+      gl.uniform2f(uPointer, frame.pointerX, frame.pointerY);
+      gl.uniform3f(uColor, frame.color[0], frame.color[1], frame.color[2]);
 
-  const resize = () => {
-    pixelRatio = Math.min(window.devicePixelRatio || 1, MAX_PIXEL_RATIO);
-    const width = Math.max(1, Math.floor(canvas.clientWidth * pixelRatio));
-    const height = Math.max(1, Math.floor(canvas.clientHeight * pixelRatio));
+      gl.drawArrays(gl.POINTS, 0, PARTICLE_COUNT);
+    },
 
-    if (canvas.width !== width || canvas.height !== height) {
-      canvas.width = width;
-      canvas.height = height;
-    }
-    gl.viewport(0, 0, canvas.width, canvas.height);
-  };
-
-  const draw = (seconds: number) => {
-    gl.clear(gl.COLOR_BUFFER_BIT);
-    gl.uniform1f(uTime, seconds);
-    gl.uniform2f(uResolution, canvas.width, canvas.height);
-    gl.uniform1f(uPixelRatio, pixelRatio);
-    gl.uniform3f(uColor, color[0], color[1], color[2]);
-    gl.drawArrays(gl.POINTS, 0, PARTICLE_COUNT);
-  };
-
-  const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches === true;
-
-  let frame = 0;
-  let origin = 0;
-  let elapsed = 0;
-
-  const loop = (now: number) => {
-    if (!origin) origin = now;
-    resize();
-    draw(elapsed + (now - origin) / 1000);
-    frame = requestAnimationFrame(loop);
-  };
-
-  const stopLoop = () => {
-    if (!frame) return;
-    cancelAnimationFrame(frame);
-    frame = 0;
-    // Bank the time so a resumed scene continues rather than snapping back.
-    elapsed += origin ? (performance.now() - origin) / 1000 : 0;
-    origin = 0;
-  };
-
-  const startLoop = () => {
-    if (frame || reducedMotion) return;
-    origin = 0;
-    frame = requestAnimationFrame(loop);
-  };
-
-  // A hidden tab should not burn battery redrawing a background nobody can see.
-  const onVisibility = () => {
-    if (document.hidden) stopLoop();
-    else startLoop();
-  };
-
-  const onResize = () => {
-    if (!reducedMotion) return;
-    resize();
-    draw(0);
-  };
-
-  const onContextLost = (event: Event) => {
-    event.preventDefault();
-    stopLoop();
-  };
-
-  canvas.addEventListener("webglcontextlost", onContextLost);
-  document.addEventListener("visibilitychange", onVisibility);
-  window.addEventListener("resize", onResize);
-
-  if (reducedMotion) {
-    // Still show the scene, just frozen — the depth reads fine without motion,
-    // and motion is the part that causes trouble.
-    resize();
-    draw(0);
-  } else {
-    startLoop();
-  }
-
-  return () => {
-    stopLoop();
-    canvas.removeEventListener("webglcontextlost", onContextLost);
-    document.removeEventListener("visibilitychange", onVisibility);
-    window.removeEventListener("resize", onResize);
-
-    gl.deleteBuffer(positionBuffer);
-    gl.deleteBuffer(sizeBuffer);
-    gl.deleteBuffer(phaseBuffer);
-    gl.deleteProgram(program);
-
-    // Deliberately NOT calling WEBGL_lose_context.loseContext() here. Losing
-    // the context poisons the canvas permanently — a later getContext on the
-    // same element hands back the same dead context, where every call fails
-    // silently. StrictMode mounts, tears down, and remounts in development, so
-    // that turned the whole scene invisible. Deleting the resources is enough;
-    // the context goes when the canvas does.
+    dispose() {
+      for (const { buffer } of attributes) gl.deleteBuffer(buffer);
+      gl.deleteProgram(program);
+    },
   };
 }

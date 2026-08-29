@@ -1,4 +1,5 @@
 import { profile } from "../content/profile";
+import { MagneticLink } from "./MagneticLink";
 import { SOCIAL_ICONS } from "./Icons";
 import { ObfuscatedEmail } from "./ObfuscatedEmail";
 import { Reveal } from "./Reveal";
@@ -13,7 +14,7 @@ export function Connect() {
           reach me.
         </p>
 
-        <ObfuscatedEmail className="mt-8 inline-block font-mono text-xl text-accent underline-offset-4 hover:underline sm:text-2xl" />
+        <ObfuscatedEmail className="link-wipe mt-8 inline-block font-mono text-xl text-accent sm:text-2xl" />
 
         <ul className="mt-10 flex flex-wrap gap-4">
           {profile.socials.map((social) => {
@@ -21,10 +22,8 @@ export function Connect() {
 
             return (
               <li key={social.label}>
-                <a
+                <MagneticLink
                   href={social.href}
-                  target="_blank"
-                  rel="noreferrer noopener"
                   // The icon is decorative, so the accessible name comes from
                   // aria-label — a bare icon link is unusable without one.
                   aria-label={`${social.label} (opens in a new tab)`}
@@ -32,7 +31,7 @@ export function Connect() {
                   className="flex size-11 items-center justify-center rounded-lg border border-hairline text-muted transition-colors hover:border-accent/50 hover:bg-accent-tint hover:text-accent"
                 >
                   {Icon ? <Icon className="size-5" /> : social.label}
-                </a>
+                </MagneticLink>
               </li>
             );
           })}
