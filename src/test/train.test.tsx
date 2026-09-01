@@ -1,0 +1,253 @@
+import { render, screen } from "@testing-library/react";
+import { fireEvent } from "@testing-library/dom";
+import { LazyMotion, domAnimation } from "motion/react";
+import { act } from "react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+import { compartments } from "../content/compartments";
+import { Train } from "../train/Train";
+
+/**
+ * The carriage, driven in jsdom.
+ *
+ * None of the 3D is real here — there is no compositor and no layout — so this
+ * asserts the things that are real regardless: what the controls do, what ends
+ * up in the document, and what the URL says. The geometry is a matter for a
+ * browser and the physics has its own suite in `trainCamera.test.ts`.
+ *
+ * The render loop is driven by hand rather than left to run. `useTrainCamera`
+ * re-registers its own frame at the top of every tick, so letting the real
+ * `requestAnimationFrame` loose in a test means an unbounded loop racing the
+ * assertions; collecting the callbacks and calling them makes time an argument.
+ */
+
+const frames: FrameRequestCallback[] = [];
+let clock = 0;
+
+/** Run the loop for `ms` of simulated time at roughly 60fps. */
+function advance(ms: number) {
+  act(() => {
+    for (let elapsed = 0; elapsed < ms; elapsed += 16) {
+      clock += 16;
+      for (const frame of frames.splice(0)) frame(clock);
+    }
+  });
+}
+
+const renderTrain = ({ reduced = false, at = "" } = {}) => {
+  window.history.replaceState(null, "", at ? `#${at}` : " ");
+  // The provider `App` supplies. The terminus car's contact poster reuses
+  // `MagneticLink`, which is an `m.a`.
+  return render(
+    <LazyMotion features={domAnimation} strict>
+      <Train reduced={reduced} onLeave={() => {}} />
+    </LazyMotion>,
+  );
+};
+
+/** The car the line map says you are in. */
+const currentCar = () => screen.getByRole("button", { current: true }).getAttribute("aria-label");
+
+/**
+ * The platform prompt, if it is showing.
+ *
+ * Matched as a whole paragraph because the line is split across elements to
+ * emphasise the key — `Press <span>W</span> to board` is three text nodes, and
+ * a plain string query sees none of them. Scoping to `p` keeps the ancestors
+ * that also contain the phrase out of the result.
+ */
+const boardPrompt = () =>
+  screen.queryAllByText(
+    (_, element) =>
+      element?.tagName === "P" && /press w to board/i.test(element.textContent ?? ""),
+  );
+
+beforeEach(() => {
+  frames.length = 0;
+  clock = 0;
+  vi.stubGlobal("requestAnimationFrame", (callback: FrameRequestCallback) =>
+    frames.push(callback),
+  );
+  vi.stubGlobal("cancelAnimationFrame", () => {});
+});
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+  window.history.replaceState(null, "", " ");
+});
+
+describe("the whole train is always in the document", () => {
+  it("mounts every car, not just the one being looked at", () => {
+    // The Ctrl+F and screen-reader guarantee: a résumé that blinks in and out
+    // as you drive is not a résumé anyone can search.
+    renderTrain({ reduced: true });
+
+    expect(screen.getAllByRole("region")).toHaveLength(compartments.length);
+
+    for (const car of compartments) {
+      expect(
+        screen.getByRole("region", { name: `Car ${car.code} — ${car.destination}` }),
+      ).toBeInTheDocument();
+    }
+  });
+
+  it("takes the page's scrolling away only while it is mounted", () => {
+    const { unmount } = renderTrain({ reduced: true });
+    expect(document.body).toHaveClass("is-riding");
+
+    unmount();
+    expect(document.body).not.toHaveClass("is-riding");
+  });
+});
+
+describe("driving", () => {
+  // Reduced motion turns each press into a discrete arrival, which is the same
+  // input path without a second of travel to simulate first.
+  const setup = () => {
+    renderTrain({ reduced: true });
+    advance(16);
+    expect(currentCar()).toBe(`Car 01, ${compartments[0].destination}`);
+  };
+
+  it("moves forward on W and back on S", () => {
+    setup();
+
+    fireEvent.keyDown(window, { code: "KeyW" });
+    advance(16);
+    expect(currentCar()).toBe(`Car 02, ${compartments[1].destination}`);
+
+    fireEvent.keyDown(window, { code: "KeyS" });
+    advance(16);
+    expect(currentCar()).toBe(`Car 01, ${compartments[0].destination}`);
+  });
+
+  it("also accepts the arrow keys, for anyone who never played a game", () => {
+    setup();
+
+    fireEvent.keyDown(window, { code: "ArrowUp" });
+    advance(16);
+    expect(currentCar()).toBe(`Car 02, ${compartments[1].destination}`);
+  });
+
+  it("jumps straight to a car on a number key", () => {
+    setup();
+
+    fireEvent.keyDown(window, { code: "Digit3" });
+    advance(16);
+    expect(currentCar()).toBe(`Car 03, ${compartments[2].destination}`);
+  });
+
+  it("ignores a number with no car behind it", () => {
+    setup();
+
+    fireEvent.keyDown(window, { code: "Digit9" });
+    advance(16);
+    expect(currentCar()).toBe(`Car 01, ${compartments[0].destination}`);
+  });
+
+  it("leaves Ctrl+S to the browser", () => {
+    // A single-letter binding that swallows chords is a broken browser, not a
+    // clever control scheme.
+    setup();
+
+    fireEvent.keyDown(window, { code: "KeyS", ctrlKey: true });
+    fireEvent.keyDown(window, { code: "KeyW", metaKey: true });
+    advance(16);
+
+    expect(currentCar()).toBe(`Car 01, ${compartments[0].destination}`);
+  });
+
+  it("stops at the terminus rather than running into the buffers", () => {
+    setup();
+
+    for (let press = 0; press < compartments.length + 4; press += 1) {
+      fireEvent.keyDown(window, { code: "KeyW" });
+      advance(16);
+    }
+
+    const last = compartments[compartments.length - 1];
+    expect(currentCar()).toBe(`Car ${last.code}, ${last.destination}`);
+  });
+});
+
+describe("a key held while the window loses focus", () => {
+  it("is released, instead of driving the train the length of the line", () => {
+    // Losing focus means the keyup never arrives. Without the blur handler the
+    // camera accelerates for as long as the visitor is away.
+    renderTrain({ at: "education" });
+
+    fireEvent.keyDown(window, { code: "KeyW" });
+    advance(600);
+
+    fireEvent.blur(window);
+    advance(6000);
+
+    const reached = currentCar();
+    const last = compartments[compartments.length - 1];
+    expect(reached).not.toBe(`Car ${last.code}, ${last.destination}`);
+
+    // And it stays put rather than creeping onward.
+    advance(4000);
+    expect(currentCar()).toBe(reached);
+  });
+});
+
+describe("boarding", () => {
+  it("opens on the platform, and asks to be boarded", () => {
+    renderTrain();
+    advance(16);
+
+    expect(screen.getByText(/now departing/i)).toBeInTheDocument();
+    expect(boardPrompt()).toHaveLength(1);
+    // Nothing to be at car 01 of yet, so no line map and no car counter.
+    expect(screen.queryByRole("navigation", { name: /cars/i })).toBeNull();
+  });
+
+  it("swaps the departure board for the controls once aboard", () => {
+    renderTrain();
+    advance(16);
+
+    fireEvent.keyDown(window, { code: "KeyW" });
+    fireEvent.keyUp(window, { code: "KeyW" });
+    advance(2500);
+
+    expect(boardPrompt()).toHaveLength(0);
+    expect(screen.getByRole("navigation", { name: /cars/i })).toBeInTheDocument();
+  });
+
+  it("skips the platform for anyone who arrived by link", () => {
+    // You asked for a specific car; being made to board first would be theatre
+    // in the way of the thing you asked for.
+    renderTrain({ at: "tech-stack" });
+    advance(16);
+
+    expect(boardPrompt()).toHaveLength(0);
+    expect(currentCar()).toBe("Car 07, Tech stack");
+  });
+});
+
+describe("every car is a URL", () => {
+  it("writes the car it arrives in into the address bar", () => {
+    renderTrain({ reduced: true });
+    advance(16);
+
+    fireEvent.keyDown(window, { code: "KeyW" });
+    advance(16);
+
+    expect(window.location.hash).toBe(`#${compartments[1].id}`);
+  });
+
+  it("follows the hash when the back button changes it", () => {
+    renderTrain({ reduced: true });
+    advance(16);
+
+    window.history.replaceState(null, "", "#terminus");
+    act(() => {
+      window.dispatchEvent(new HashChangeEvent("hashchange"));
+    });
+    advance(16);
+
+    const last = compartments[compartments.length - 1];
+    expect(currentCar()).toBe(`Car ${last.code}, ${last.destination}`);
+  });
+});

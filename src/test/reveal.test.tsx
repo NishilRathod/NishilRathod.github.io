@@ -2,7 +2,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import { act } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import App from "../App";
+import { LegacyPage } from "../components/LegacyPage";
 
 type Callback = (entries: { isIntersecting: boolean }[]) => void;
 
@@ -49,7 +49,7 @@ describe("scroll reveal", () => {
   });
 
   it("starts hidden, then reveals once the observer reports intersection", async () => {
-    const { container } = render(<App />);
+    const { container } = render(<LegacyPage />);
 
     // Before intersecting, revealed content is transparent.
     expect(hiddenIn(mainOf(container)).length).toBeGreaterThan(0);
@@ -72,7 +72,7 @@ describe("scroll reveal", () => {
       removeEventListener: () => {},
     }));
 
-    const { container } = render(<App />);
+    const { container } = render(<LegacyPage />);
 
     // Nothing may depend on an observer firing, and nothing may fade in either:
     // a reduced-motion visitor must see the whole page immediately, hero
@@ -84,7 +84,7 @@ describe("scroll reveal", () => {
   it("stays visible when IntersectionObserver is missing entirely", () => {
     vi.stubGlobal("IntersectionObserver", undefined);
 
-    const { container } = render(<App />);
+    const { container } = render(<LegacyPage />);
 
     // Failing closed here would leave the page permanently blank.
     expect(hiddenIn(mainOf(container))).toHaveLength(0);
