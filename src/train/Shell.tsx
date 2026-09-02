@@ -26,8 +26,31 @@ import { Plane } from "./Plane";
 
 const WINDOW_W = 520;
 const WINDOW_H = 420;
-/** Left edges along the wall, which spans CAR_D. */
-const WINDOW_X = [180, 900, 1620];
+
+/**
+ * Where the windows sit, as distance BACK FROM THE BULKHEAD — not as a CSS
+ * offset along the wall.
+ *
+ * The two walls are mirror images: one is `rotateY(90deg)` and the other
+ * `rotateY(-90deg)`, which map the plane's local x to depth in opposite
+ * directions. A single shared list of `left` offsets therefore does not
+ * describe one carriage, it describes two different ones — it used to put the
+ * third window at the front of the left wall and the first window at the front
+ * of the right. Measuring from the bulkhead states the intent, and `offsetFor`
+ * is the only place that has to know about the mirror.
+ *
+ * The first entry is what you actually see while parked. Only the band from
+ * `HORIZON` to `READ_GAP` is in frame, which is 450 deep against a 520-wide
+ * window, so it cannot sit entirely inside — and should not. A window running
+ * off the edge of your vision is what being inside a carriage looks like; one
+ * floating complete in the middle of the view looks like a picture of a window.
+ */
+const WINDOW_FROM_BULKHEAD = [30, 750, 1470];
+
+/** Local `left` offset along a wall plane, which spans CAR_D with its far end
+ *  at the bulkhead on the left side and at the rear on the right. */
+const offsetFor = (fromBulkhead: number, side: "left" | "right") =>
+  side === "left" ? CAR_D - fromBulkhead - WINDOW_W : fromBulkhead;
 
 function Window() {
   return (
@@ -89,8 +112,12 @@ function SideWall({ car, side }: { car: Compartment; side: "left" | "right" }) {
         }}
       />
 
-      {WINDOW_X.map((x) => (
-        <div key={x} className="absolute" style={{ left: x }}>
+      {WINDOW_FROM_BULKHEAD.map((fromBulkhead) => (
+        <div
+          key={fromBulkhead}
+          className="absolute"
+          style={{ left: offsetFor(fromBulkhead, side) }}
+        >
           <Window />
         </div>
       ))}
@@ -142,9 +169,9 @@ export function Shell({ car }: { car: Compartment }) {
         transform={`translateY(${-CAR_H / 2}px) translateZ(${CAR_CENTER_Z}px) rotateX(-90deg)`}
         style={{
           background:
-            "linear-gradient(90deg, #111318 0 40%, " +
-            "color-mix(in srgb, var(--color-lamp) 78%, transparent) 46% 54%, " +
-            "#111318 60% 100%)",
+            "linear-gradient(90deg, #111318 0 42%, " +
+            "color-mix(in srgb, var(--color-lamp) 40%, transparent) 47% 53%, " +
+            "#111318 58% 100%)",
         }}
       />
 

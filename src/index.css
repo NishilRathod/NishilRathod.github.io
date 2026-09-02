@@ -159,12 +159,12 @@
     background-image: repeating-linear-gradient(
       90deg,
       transparent 0 300px,
-      color-mix(in srgb, var(--color-accent) 42%, transparent) 300px 308px,
+      color-mix(in srgb, var(--color-accent) 58%, transparent) 300px 308px,
       transparent 308px 420px
     );
     /* One 420px tile of the gradient above, per 2.8s: 150px/s. */
     animation: streak-far 2.8s linear infinite;
-    opacity: 0.55;
+    opacity: 0.72;
   }
 
   /* The near strip is soft because its gradient is soft, not because a filter
@@ -175,15 +175,15 @@
     background-image: repeating-linear-gradient(
       90deg,
       transparent 0 148px,
-      color-mix(in srgb, var(--color-accent) 7%, transparent) 152px,
-      color-mix(in srgb, var(--color-accent) 26%, transparent) 156px 160px,
-      color-mix(in srgb, var(--color-accent) 7%, transparent) 164px,
+      color-mix(in srgb, var(--color-accent) 10%, transparent) 152px,
+      color-mix(in srgb, var(--color-accent) 38%, transparent) 156px 160px,
+      color-mix(in srgb, var(--color-accent) 10%, transparent) 164px,
       transparent 168px 190px
     );
     /* One 190px tile, per 0.3065s: 620px/s. The ratio to the far strip is
        the parallax; the absolute values are just "fast". */
     animation: streak-near 0.3065s linear infinite;
-    opacity: 0.5;
+    opacity: 0.62;
   }
 
   /* The sway of the carriage on its bogies.
@@ -202,6 +202,18 @@
 
   .cabin-roll {
     animation: cabin-roll 5.712s ease-in-out infinite;
+  }
+
+  /* The bogies crossing a rail joint.
+
+     The sway above is what the carriage does; this is what the track does to
+     it, and it is the cue that says "train" rather than "boat". Short, sharp,
+     and on a period unrelated to either sway so the three never line up into a
+     pattern you can predict. It has to stay small enough to read as texture —
+     at the point where you can consciously count the joints it has become a
+     fault in the page rather than a train under you. */
+  .cabin-clatter {
+    animation: cabin-clatter 0.94s linear infinite;
   }
 
   /* The destination board above each door. Amber on black, scanned, and the one
@@ -311,32 +323,56 @@
   }
 }
 
-/* sin(t * 1.7) * 3.4px — quarter-points of one 3.696s period. */
+/* sin(t * 1.7), amplitude raised from 3.4px once the camera stepped back and
+   there were wall edges and window frames for it to move against — at the old
+   framing it was 3.4px of a flat wall shifting against nothing, which is to say
+   invisible. Quarter-points of one 3.696s period. */
 @keyframes cabin-bob {
   0%,
   100% {
     transform: translateY(0);
   }
   25% {
-    transform: translateY(3.4px);
+    transform: translateY(5.5px);
   }
   75% {
-    transform: translateY(-3.4px);
+    transform: translateY(-5.5px);
   }
 }
 
-/* sin(t * 1.1) * 0.32deg — a slower period than the bob, so the two never
-   settle into a repeating pattern you can see. */
+/* sin(t * 1.1) — a slower period than the bob, so the two never settle into a
+   repeating pattern you can see. Roll is the one to be careful with: it swings
+   the whole frame and reads as nausea long before the bob does. */
 @keyframes cabin-roll {
   0%,
   100% {
     transform: rotateZ(0deg);
   }
   25% {
-    transform: rotateZ(0.32deg);
+    transform: rotateZ(0.45deg);
   }
   75% {
-    transform: rotateZ(-0.32deg);
+    transform: rotateZ(-0.45deg);
+  }
+}
+
+/* A rail joint: a sharp drop and a settle, then nothing until the next one.
+   `linear` between these stops, not a sine — a joint is an impact, and easing
+   it turns the whole thing back into a gentle float. */
+@keyframes cabin-clatter {
+  0%,
+  62%,
+  100% {
+    transform: translateY(0);
+  }
+  66% {
+    transform: translateY(1.6px);
+  }
+  72% {
+    transform: translateY(-0.9px);
+  }
+  78% {
+    transform: translateY(0.4px);
   }
 }
 

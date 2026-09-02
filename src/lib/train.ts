@@ -7,15 +7,34 @@
  * shaped one — the alternative, sizing the geometry in viewport units, changes
  * the room's shape as the window resizes and looks broken while you drag.
  *
- * The numbers below are the outcome of one constraint that drives everything
- * else: poster text has to be READABLE. A perspective projection shrinks the
- * far wall by `PERSPECTIVE / (PERSPECTIVE + distance)`. Parked at the middle of
- * a realistically long car, that factor is around 0.53 and 20px body text lands
- * at 10px on screen, which is useless. So the camera parks near the end of the
- * car it is reading — `READ_GAP` from the wall, the distance you would actually
- * stand at to read something bolted to it — which buys back 0.68 while keeping
- * the perspective wide enough that the side walls still fill the periphery and
- * the thing reads as a room.
+ * Two constraints fight over these numbers, and the reading position is where
+ * they are settled.
+ *
+ * A perspective projection shrinks everything at distance `d` by
+ * `PERSPECTIVE / (PERSPECTIVE + d)`. Readable poster text therefore wants the
+ * camera CLOSE to the end wall it is reading. But a surface running down the
+ * length of the car only enters the frame at all beyond
+ *
+ *     d > PERSPECTIVE * (CAR_W / STAGE_W)      = 450
+ *
+ * and the side walls' far end is the bulkhead itself, so standing closer than
+ * that means no side wall, no ceiling, no floor, no windows — you are looking
+ * at nothing but the end wall. Seeing the carriage wants the camera FAR.
+ *
+ * This used to be settled at `READ_GAP = 420`, which is on the wrong side of
+ * that line, and the comment here claimed the periphery was still full of side
+ * wall. It was not: the room measured exactly zero pixels while parked, the
+ * car's cross-section aspect being identical to the stage's (1920/1140 and
+ * 1280/760 are both 1.684) so the end wall overflowed the frame in both
+ * directions at once and hid everything behind it. The site read as a train
+ * only while you were moving, and became a dark web page the moment you stopped
+ * to read — which is the moment you spend nearly all of your time in.
+ *
+ * It is settled at 900 now: far enough that a window, the lit ceiling strip and
+ * the converging floor are all in frame while you read, with the end wall at
+ * 75% of the frame's width. Stepping back scales the whole wall uniformly, so
+ * nothing about the poster layout changed except its size, and `PANEL_FONT`
+ * buys that back.
  */
 
 /** Interior width, wall to wall. */
@@ -30,8 +49,10 @@ export const VESTIBULE_D = 460;
 /** Distance between one car's reading position and the next. */
 export const PITCH = CAR_D + VESTIBULE_D;
 
-/** How far the parked camera stands off the bulkhead it is reading. */
-export const READ_GAP = 420;
+/** How far the parked camera stands off the bulkhead it is reading. Must stay
+ *  comfortably above `PERSPECTIVE * (CAR_W / STAGE_W)` — below that the room
+ *  disappears behind the end wall. See the note at the top. */
+export const READ_GAP = 900;
 
 /** Focal length. Short enough that the side walls converge and the carriage has
  *  depth; long enough that the far wall does not smear. */
@@ -41,9 +62,30 @@ export const PERSPECTIVE = 900;
 export const STAGE_W = 1280;
 export const STAGE_H = 760;
 
-/** Below this the stage scales down far enough that poster text stops being
- *  legible, so narrow screens are sent to the readable page instead. */
-export const MIN_TRAIN_WIDTH = 900;
+/**
+ * How far away a lengthwise surface — side wall, ceiling, floor — has to be
+ * before it is inside the frame rather than off its edge.
+ *
+ * This is the number that makes `READ_GAP` a constraint rather than a taste.
+ * Nothing nearer than this is ever seen, so a reading position closer than it
+ * puts the visitor in front of a flat wall with no carriage around it. The car
+ * happens to have the stage's exact aspect ratio, so the same figure governs
+ * the walls and the ceiling alike.
+ */
+export const HORIZON = PERSPECTIVE * (CAR_W / STAGE_W) - PERSPECTIVE;
+
+/**
+ * Below this the stage scales down far enough that poster text stops being
+ * legible, so narrow screens are sent to the readable page instead.
+ *
+ * Raised from 900 along with `READ_GAP`. Stepping the camera back cost about
+ * 15% of on-screen text size at every viewport — measured, same paragraph, same
+ * car: a line of poster prose went 22.7px to 19.0px at 1440 wide — so the width
+ * at which type hits the same floor moved up by the same proportion. Leaving it
+ * at 900 would have kept the cutoff where it was and quietly let the text
+ * through it get smaller.
+ */
+export const MIN_TRAIN_WIDTH = 1100;
 
 /** Where you stand before boarding: outside car 01, short of its doorway. */
 export const PLATFORM_Z = -2600;
@@ -94,8 +136,16 @@ export const HEADER_H = CAR_H - DOOR_H;
 
 /** Base font size inside a poster panel, in scene pixels. Everything in a
  *  poster is sized in `em` against this, so the whole hierarchy scales from one
- *  number — see `posters/Plate.tsx`. */
-export const PANEL_FONT = 26;
+ *  number — see `posters/Plate.tsx`.
+ *
+ *  Raised from 26 when the camera stepped back to `READ_GAP` 900. Stepping back
+ *  shrinks the whole wall uniformly, poster and panel alike, so the layout was
+ *  untouched and only its on-screen size fell; this buys most of it back — the
+ *  net loss is about 15% rather than 27%. It is not a free trade: the type is
+ *  now larger relative to the panel holding it, so the measure is narrower and
+ *  the longest paragraph on the train sets in six lines where it used to take
+ *  five. */
+export const PANEL_FONT = 30;
 
 /** Local z of a car's geometric centre, measured from its reading position. */
 export const CAR_CENTER_Z = (CAR_D - 2 * READ_GAP) / 2;

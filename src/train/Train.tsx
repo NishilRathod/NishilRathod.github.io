@@ -23,6 +23,8 @@ import { useTrainInput } from "./useTrainInput";
  *   roll     and its roll — a separate element because the two are sines at
  *            different frequencies, so they cannot be one animation, and both
  *            are CSS so the render loop never has to wake up for them
+ *   clatter  the bogies crossing rail joints, on a third period again, so the
+ *            three never line up into a rhythm you can predict
  *   world    the camera: one translateZ, written by the render loop
  *
  * Every car is rendered, not just the ones nearby. Eight of them is a couple of
@@ -149,20 +151,25 @@ export function Train({ reduced, onLeave }: { reduced: boolean; onLeave: () => v
           <div className="cabin-bob absolute inset-0" style={{ transformStyle: "preserve-3d" }}>
             <div className="cabin-roll absolute inset-0" style={{ transformStyle: "preserve-3d" }}>
               <div
-                ref={worldRef}
-                className="absolute inset-0"
+                className="cabin-clatter absolute inset-0"
                 style={{ transformStyle: "preserve-3d" }}
               >
-                {compartments.map((car, position) => (
-                  <Compartment
-                    key={car.id}
-                    car={car}
-                    index={position}
-                    nextDestination={compartments[position + 1]?.destination ?? null}
-                    isCurrent={position === index}
-                    near={Math.abs(position - index) <= 1}
-                  />
-                ))}
+                <div
+                  ref={worldRef}
+                  className="absolute inset-0"
+                  style={{ transformStyle: "preserve-3d" }}
+                >
+                  {compartments.map((car, position) => (
+                    <Compartment
+                      key={car.id}
+                      car={car}
+                      index={position}
+                      nextDestination={compartments[position + 1]?.destination ?? null}
+                      isCurrent={position === index}
+                      near={Math.abs(position - index) <= 1}
+                    />
+                  ))}
+                </div>
               </div>
             </div>
           </div>
@@ -171,14 +178,20 @@ export function Train({ reduced, onLeave }: { reduced: boolean; onLeave: () => v
 
       {/* Depth. Dark at the vanishing point so the train recedes into the night
           rather than stopping at a wall — sized to sit over the doorway and not
-          over the panels you are reading either side of it. */}
+          over the panels you are reading either side of it.
+
+          Retuned when the camera stepped back to READ_GAP 900: the doorway is
+          about half the width on screen that it used to be, so the old ellipse
+          had stopped describing it and was washing across the inner edge of
+          both posters and flattening the doorway into a slab. */}
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-0"
         style={{
           background:
-            "radial-gradient(ellipse 22% 34% at 50% 52%, var(--color-bg) 0%, " +
-            "color-mix(in srgb, var(--color-bg) 72%, transparent) 58%, transparent 100%)",
+            "radial-gradient(ellipse 11% 30% at 50% 50%, " +
+            "color-mix(in srgb, var(--color-bg) 82%, transparent) 0%, " +
+            "color-mix(in srgb, var(--color-bg) 58%, transparent) 58%, transparent 100%)",
         }}
       />
       <div

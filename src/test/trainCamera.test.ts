@@ -1,6 +1,17 @@
 import { describe, expect, it } from "vitest";
 
-import { CRUISE, DRAG, MAX_DT, PITCH } from "../lib/train";
+import {
+  CAR_D,
+  CAR_W,
+  CRUISE,
+  DRAG,
+  HORIZON,
+  MAX_DT,
+  PERSPECTIVE,
+  PITCH,
+  READ_GAP,
+  STAGE_W,
+} from "../lib/train";
 import {
   aimAt,
   carIndexAt,
@@ -148,5 +159,35 @@ describe("a backgrounded tab", () => {
 
     expect(woken).toEqual(clamped);
     expect(woken.z).toBeLessThan(PITCH);
+  });
+});
+
+/**
+ * Where the camera stands, which is a geometry question rather than a physics
+ * one but fails the same way: silently, and only to the eye.
+ *
+ * The site shipped for a while with the camera 420 from the bulkhead, which is
+ * nearer than anything lengthwise can be seen from. Parked in a compartment you
+ * therefore saw no side wall, no ceiling, no floor and no windows — just the end
+ * wall, overflowing the frame in both directions and hiding the carriage behind
+ * it. Every test passed. It only showed up by standing in the thing and noticing
+ * it had stopped being a train.
+ */
+describe("the reading position", () => {
+  it("stands far enough back to leave the carriage in frame", () => {
+    // A surface running the length of the car is off the edge of the frame
+    // until this far away, so a reading position nearer than it is a reading
+    // position inside a flat wall.
+    expect(HORIZON).toBe(PERSPECTIVE * (CAR_W / STAGE_W) - PERSPECTIVE);
+    expect(READ_GAP).toBeGreaterThan(HORIZON);
+
+    // Not by a hair, either — the visible band is what the room is made of.
+    expect(READ_GAP - HORIZON).toBeGreaterThanOrEqual(400);
+  });
+
+  it("still stands inside the car it is reading", () => {
+    // Far enough back to see the room, near enough that you have not reversed
+    // out through the gangway behind you.
+    expect(READ_GAP).toBeLessThan(CAR_D / 2);
   });
 });
