@@ -186,6 +186,26 @@
     opacity: 0.62;
   }
 
+  /* Nothing readable while you are still on the platform.
+
+     Car 01 is fully built and lit before you board, so its posters and its
+     notice plate used to read straight through the departure card — a wall of
+     body copy behind the one screen that is meant to say only "this train is
+     leaving, press W". A scrim heavy enough to hide text also flattens the
+     carriage into a black rectangle, and the lit windows down the platform are
+     the reason to stand there at all, so the text goes and the train stays.
+
+     Opacity rather than `display` or `visibility`: this lasts a few seconds and
+     the whole résumé is inside it, so it should never leave the accessibility
+     tree on the way past. */
+  .is-platform .poster-slot {
+    opacity: 0;
+  }
+
+  .poster-slot {
+    transition: opacity 900ms ease-out;
+  }
+
   /* The sway of the carriage on its bogies.
 
      Two sines at different frequencies, so it cannot be one animation: the bob

@@ -1,4 +1,4 @@
-import type { Compartment, Wall } from "../content/compartments";
+import { compartments, type Compartment, type Wall } from "../content/compartments";
 import {
   CAR_H,
   CAR_W,
@@ -107,49 +107,147 @@ function EndWall() {
  * Remounted on arrival — see the `key` at the call site — so it catches and
  * settles the way a real dot-matrix panel does when the service changes.
  */
-function DestinationBoard({ text, catching }: { text: string; catching: boolean }) {
+function DestinationBoard({
+  label,
+  destination,
+  catching,
+}: {
+  label: string;
+  destination: string;
+  catching: boolean;
+}) {
   return (
     <div
       className="absolute overflow-hidden border-[8px] border-black/70"
       style={{ left: PANEL_W, top: 0, width: DOOR_W, height: HEADER_H }}
     >
       <div
-        className={`board absolute inset-0 flex items-center justify-center px-6 ${
+        className={`board absolute inset-0 flex flex-col items-center justify-center gap-2 px-5 ${
           catching ? "board-catch" : ""
         }`}
       >
-        <span className="truncate font-mono text-[27px] font-medium uppercase tracking-[0.22em]">
-          {text}
+        {/* Two lines, because one was not wide enough for the job. The board is
+            DOOR_W across and a tracked mono character costs about 0.82em, so a
+            single "Next — WeatherBoard" ran past the end and came back as
+            "NEXT — WEATHERBO…" — the destination, which is the entire point of
+            a destination board, was the half that got cut. Splitting the label
+            off leaves the full width to the name, and at this size the longest
+            one on the train fits with room to spare. */}
+        <span className="font-mono text-[17px] uppercase tracking-[0.34em] opacity-55">
+          {label}
+        </span>
+        <span className="truncate font-mono text-[30px] font-medium uppercase tracking-[0.16em]">
+          {destination}
         </span>
       </div>
     </div>
   );
 }
 
+/**
+ * The line diagram, for cars whose right-hand panel carries no poster.
+ *
+ * Three of the eight have content on one side only, which left half the end
+ * wall bare — not as wall, but as a gap where something was missing. This is
+ * the strip above a metro door: every stop on the line, where you are on it,
+ * and how much of the journey is left. It is carriage furniture rather than
+ * content, so it is built here from the same list the train is built from and
+ * never enters the manifest — there is nothing about it for anyone to author.
+ */
+function LineDiagram({ index }: { index: number }) {
+  return (
+    <div
+      className="poster-slot absolute flex flex-col justify-center gap-7 border-[6px] border-black/45 px-12 py-10"
+      style={{
+        left: PANEL_W + DOOR_W + 56,
+        top: 210,
+        width: PANEL_W - 112,
+        height: 640,
+        background: "linear-gradient(to bottom, #1e2027, #131519)",
+      }}
+      aria-hidden="true"
+    >
+      <span className="font-mono text-[19px] uppercase tracking-[0.34em] text-lamp/45">
+        This train calls at
+      </span>
+
+      <ol className="flex flex-col gap-[13px]">
+        {compartments.map((stop, position) => {
+          const here = position === index;
+          const passed = position < index;
+
+          return (
+            <li key={stop.id} className="flex items-center gap-5">
+              <span
+                className="size-[13px] shrink-0 rounded-full"
+                style={{
+                  background: here
+                    ? "var(--color-lamp)"
+                    : passed
+                      ? "#ffffff22"
+                      : "color-mix(in srgb, var(--color-lamp) 30%, transparent)",
+                }}
+              />
+              <span
+                className={`font-mono text-[21px] uppercase tracking-[0.16em] ${
+                  here ? "text-lamp" : passed ? "text-enamel/20" : "text-enamel/45"
+                }`}
+              >
+                {stop.destination}
+              </span>
+            </li>
+          );
+        })}
+      </ol>
+    </div>
+  );
+}
+
+/**
+ * The seats come up the bottom of the end wall, so the panels stop above them.
+ *
+ * Content used to run the full height of the wall, which was correct when the
+ * carriage below it was never in frame. Now there is a bank of seats between
+ * you and the bulkhead and it hides everything below this line — the last
+ * paragraph of the longest car was disappearing behind a seat back.
+ */
+const SEAT_LINE = 240;
+
 function slot(wall: Wall) {
   return wall === "left"
-    ? // The wall itself: full height, content optically centred.
-      { left: 56, top: 0, width: PANEL_W - 112, height: CAR_H, alignItems: "center" as const }
+    ? // The wall itself, down to the seats, content optically centred.
+      {
+        left: 56,
+        top: 0,
+        width: PANEL_W - 112,
+        height: CAR_H - SEAT_LINE,
+        alignItems: "center" as const,
+      }
     : // A plate screwed on, mounted high.
       {
         left: PANEL_W + DOOR_W + 56,
         top: 170,
         width: PANEL_W - 112,
-        height: 720,
+        height: 640,
         alignItems: "flex-start" as const,
       };
 }
 
 export function Bulkhead({
   car,
+  index,
   nextDestination,
   isCurrent,
 }: {
   car: Compartment;
+  /** This car's place on the line, for the diagram. */
+  index: number;
   /** The car ahead, or null at the terminus. */
   nextDestination: string | null;
   isCurrent: boolean;
 }) {
+  const hasRightPoster = car.posters.some((poster) => poster.wall === "right");
+
   return (
     <Plane
       w={CAR_W}
@@ -180,8 +278,11 @@ export function Bulkhead({
         // Remounting replays the catch animation on arrival.
         key={`${car.id}-${isCurrent}`}
         catching={isCurrent}
-        text={nextDestination === null ? "End of the line" : `Next — ${nextDestination}`}
+        label={nextDestination === null ? "This service terminates" : "Next stop"}
+        destination={nextDestination === null ? "End of the line" : nextDestination}
       />
+
+      {hasRightPoster ? null : <LineDiagram index={index} />}
 
       {car.posters.map((poster) => {
         const { alignItems, ...box } = slot(poster.wall);
@@ -189,7 +290,7 @@ export function Bulkhead({
         return (
           <div
             key={`${poster.kind}-${poster.wall}`}
-            className="absolute flex overflow-hidden"
+            className="poster-slot absolute flex overflow-hidden"
             style={{ ...box, alignItems, fontSize: PANEL_FONT }}
           >
             <div className="w-full">{renderPoster(poster, car)}</div>

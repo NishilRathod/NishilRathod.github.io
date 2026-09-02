@@ -131,7 +131,9 @@ export function Train({ reduced, onLeave }: { reduced: boolean; onLeave: () => v
   return (
     <div
       ref={stageRef}
-      className="fixed inset-0 touch-none overflow-hidden bg-bg select-none"
+      className={`fixed inset-0 touch-none overflow-hidden bg-bg select-none ${
+        boarded ? "" : "is-platform"
+      }`}
     >
       <div
         ref={frameRef}
@@ -180,16 +182,16 @@ export function Train({ reduced, onLeave }: { reduced: boolean; onLeave: () => v
           rather than stopping at a wall — sized to sit over the doorway and not
           over the panels you are reading either side of it.
 
-          Retuned when the camera stepped back to READ_GAP 900: the doorway is
-          about half the width on screen that it used to be, so the old ellipse
-          had stopped describing it and was washing across the inner edge of
-          both posters and flattening the doorway into a slab. */}
+          Retuned twice as the camera stepped back, because it is drawn in
+          screen space around a doorway that keeps getting smaller: at
+          READ_GAP 420 it was sized for a wall that filled the frame, and it has
+          shrunk with the door each time since. */}
       <div
         aria-hidden="true"
         className="pointer-events-none absolute inset-0"
         style={{
           background:
-            "radial-gradient(ellipse 11% 30% at 50% 50%, " +
+            "radial-gradient(ellipse 9% 26% at 50% 50%, " +
             "color-mix(in srgb, var(--color-bg) 82%, transparent) 0%, " +
             "color-mix(in srgb, var(--color-bg) 58%, transparent) 58%, transparent 100%)",
         }}
@@ -200,6 +202,29 @@ export function Train({ reduced, onLeave }: { reduced: boolean; onLeave: () => v
         style={{
           background:
             "radial-gradient(ellipse 78% 78% at 50% 50%, transparent 38%, #000000cc 100%)",
+        }}
+      />
+
+      {/* The platform.
+
+          Car 01 is fully built and lit while you are still outside it, so its
+          posters and its notice plate read straight through the departure card
+          — a wall of body copy behind the one screen that is meant to say only
+          "this train is leaving, press W". Holding it back until you board is
+          not a loading state: it is the difference between arriving at a train
+          and arriving at a page about a train.
+
+          Deliberately light. A scrim heavy enough to hide the poster text also
+          flattens the carriage into a black rectangle, and the lit windows down
+          the platform are the reason to stand there at all — so the text is
+          taken out separately by `.is-platform .poster-slot` and this only has
+          to settle the rest of the scene behind the card. */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 transition-opacity duration-[1200ms] ease-out"
+        style={{
+          background: "var(--color-bg)",
+          opacity: boarded ? 0 : 0.55,
         }}
       />
 

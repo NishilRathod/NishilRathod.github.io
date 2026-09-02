@@ -158,8 +158,13 @@ describe("the render loop costs nothing while you are parked", () => {
     advance(16);
 
     // Parked in car 01, so cars 01 and 02 have rooms and the other six do not.
-    const windowsPerCar = 6;
-    expect(container.querySelectorAll(".streak-far")).toHaveLength(2 * windowsPerCar);
+    // Counted as cars-with-a-room rather than as windows: how many panes of
+    // glass a carriage has is a matter of taste and has already changed twice,
+    // but which cars get built is the thing this test is actually about.
+    const carsWithARoom = [...container.querySelectorAll("section[aria-label]")].filter(
+      (section) => section.querySelector(".streak-far"),
+    );
+    expect(carsWithARoom).toHaveLength(2);
 
     // The half that must never be conditional: all eight cars, and the words on
     // the terminus poster while standing at the other end of the train.

@@ -24,7 +24,7 @@ import { Plane } from "./Plane";
  * text along with it.
  */
 
-const WINDOW_W = 520;
+const WINDOW_W = 460;
 const WINDOW_H = 420;
 
 /**
@@ -39,13 +39,14 @@ const WINDOW_H = 420;
  * of the right. Measuring from the bulkhead states the intent, and `offsetFor`
  * is the only place that has to know about the mirror.
  *
- * The first entry is what you actually see while parked. Only the band from
- * `HORIZON` to `READ_GAP` is in frame, which is 450 deep against a 520-wide
- * window, so it cannot sit entirely inside — and should not. A window running
- * off the edge of your vision is what being inside a carriage looks like; one
- * floating complete in the middle of the view looks like a picture of a window.
+ * Parked, only the band from `HORIZON` to `READ_GAP` is in frame — 750 deep —
+ * so you see the first of these whole and the leading edge of the second. That
+ * is the right amount: a window running off the edge of your vision is what
+ * being inside a carriage looks like, where one floating complete in the middle
+ * of the view looks like a picture of a window. The rest of the run exists for
+ * the travel between cars, which is when the length of the carriage shows.
  */
-const WINDOW_FROM_BULKHEAD = [30, 750, 1470];
+const WINDOW_FROM_BULKHEAD = [40, 660, 1280, 1900];
 
 /** Local `left` offset along a wall plane, which spans CAR_D with its far end
  *  at the bulkhead on the left side and at the rear on the right. */
@@ -76,6 +77,94 @@ function Window() {
       />
       <div className="absolute inset-0 shadow-[inset_0_0_60px_rgba(0,0,0,0.85)]" />
     </div>
+  );
+}
+
+/**
+ * A bank of seats down one side.
+ *
+ * Two planes, not forty. Individual seat units would be sixteen or so per car
+ * and every one of them its own compositor layer in a 3D context; the run of
+ * seat backs is a repeating gradient on one long plane instead, with a second
+ * plane laid flat across the top to give the bank thickness where you look down
+ * on it. It reads as a row of seats and costs four planes a car.
+ *
+ * The heights are the whole trick. The camera sits at the vertical middle of
+ * the car, so a seat back at a realistic 1.2m would come up past your eyeline
+ * and the aisle would close over — the "grey boxes in the aisle you are trying
+ * to read down" that the old moquette band existed to avoid. `SEAT_H` keeps the
+ * backs below eye level so you look along the tops of them to the far wall, and
+ * `SEAT_DEPTH` keeps them hard against the sides so the middle of the frame,
+ * where the doorway and most of the poster are, stays clear.
+ */
+const SEAT_H = 240;
+const SEAT_DEPTH = 260;
+/** One seat's worth of pitch along the car, so the backs repeat believably. */
+const SEAT_PITCH = 260;
+
+function SeatBank({ side }: { side: "left" | "right" }) {
+  const outward = side === "left" ? -1 : 1;
+  const x = outward * (CAR_W / 2 - SEAT_DEPTH);
+  const topY = CAR_H / 2 - SEAT_H;
+
+  return (
+    <>
+      {/* The aisle-facing side of the bank: seat backs as a repeating run, with
+          the strip light catching along the headrest line. */}
+      <Plane
+        w={CAR_D}
+        h={SEAT_H}
+        transform={`translateX(${x}px) translateY(${CAR_H / 2 - SEAT_H / 2}px) translateZ(${CAR_CENTER_Z}px) rotateY(${side === "left" ? 90 : -90}deg)`}
+        style={{
+          background:
+            // One seat: upholstery, then the dark slot where the next one is
+            // bolted on. The slot has to be wide and near-black or the run
+            // reads as a bench with lines drawn on it rather than as chairs.
+            `repeating-linear-gradient(90deg, ` +
+            `var(--color-moquette) 0 ${SEAT_PITCH - 64}px, ` +
+            `#0d0a12 ${SEAT_PITCH - 64}px ${SEAT_PITCH - 6}px, ` +
+            `#241d2b ${SEAT_PITCH - 6}px ${SEAT_PITCH}px), ` +
+            "linear-gradient(to bottom, " +
+            "color-mix(in srgb, var(--color-lamp) 10%, transparent) 0%, " +
+            "transparent 26%, #00000066 100%)",
+        }}
+      >
+        {/* The lit top edge of each backrest, broken by the same slots, so the
+            headrests read as separate objects catching the strip light. */}
+        <div
+          className="absolute inset-x-0 top-0 h-[26px]"
+          style={{
+            background:
+              `repeating-linear-gradient(90deg, ` +
+              `color-mix(in srgb, var(--color-lamp) 30%, #2b2333) 0 ${SEAT_PITCH - 64}px, ` +
+              `transparent ${SEAT_PITCH - 64}px ${SEAT_PITCH}px)`,
+          }}
+        />
+        <div className="absolute inset-x-0 bottom-0 h-[70px] bg-black/45" />
+      </Plane>
+
+      {/* The top of the bank, laid flat. Without it the seats are a painted
+          stripe on a wall; with it they have a surface you are looking down on
+          and the carriage gets a floor plan.
+
+          Sized SEAT_DEPTH across by CAR_D along rather than the other way with
+          a rotateZ to fix it up: after rotateX the plane's own width runs
+          across the car and its height runs down the length, so stating it in
+          that order is the whole transform and the seat divisions land along
+          the car instead of across it. */}
+      <Plane
+        w={SEAT_DEPTH}
+        h={CAR_D}
+        transform={`translateX(${outward * (CAR_W / 2 - SEAT_DEPTH / 2)}px) translateY(${topY}px) translateZ(${CAR_CENTER_Z}px) rotateX(90deg)`}
+        style={{
+          background:
+            `repeating-linear-gradient(0deg, ` +
+            `#241d2b 0 ${SEAT_PITCH - 64}px, ` +
+            `#0b0810 ${SEAT_PITCH - 64}px ${SEAT_PITCH}px), ` +
+            `linear-gradient(to ${side === "left" ? "left" : "right"}, #00000070, transparent 70%)`,
+        }}
+      />
+    </>
   );
 }
 
@@ -122,15 +211,15 @@ function SideWall({ car, side }: { car: Compartment; side: "left" | "right" }) {
         </div>
       ))}
 
-      {/* Seating, implied. Modelling actual seats in CSS planes gets you grey
-          boxes in the aisle you are trying to read down; a moquette band reads
-          as upholstery and stays out of the way. */}
+      {/* The moquette behind the seats, so the wall between and above them is
+          upholstered rather than bare where a gap shows through. */}
       <div
-        className="absolute inset-x-0 bottom-0 h-[230px]"
+        className="absolute inset-x-0 bottom-0"
         style={{
+          height: SEAT_H,
           background:
             "repeating-linear-gradient(58deg, var(--color-moquette) 0 14px, #2a2130 14px 28px)",
-          opacity: 0.55,
+          opacity: 0.4,
         }}
       />
 
@@ -193,6 +282,9 @@ export function Shell({ car }: { car: Compartment }) {
 
       <SideWall car={car} side="left" />
       <SideWall car={car} side="right" />
+
+      <SeatBank side="left" />
+      <SeatBank side="right" />
 
       {/* The gangway behind this car: narrower and shorter than the saloon, so
           the doorway you look back through frames it. */}

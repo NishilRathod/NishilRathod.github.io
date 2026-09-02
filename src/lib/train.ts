@@ -30,11 +30,14 @@
  * only while you were moving, and became a dark web page the moment you stopped
  * to read — which is the moment you spend nearly all of your time in.
  *
- * It is settled at 900 now: far enough that a window, the lit ceiling strip and
- * the converging floor are all in frame while you read, with the end wall at
- * 75% of the frame's width. Stepping back scales the whole wall uniformly, so
- * nothing about the poster layout changed except its size, and `PANEL_FONT`
- * buys that back.
+ * It is settled at the middle of the car now — far enough that windows, the lit
+ * ceiling strip, the converging floor and the seats are all in frame while you
+ * read, with the end wall at about 64% of the frame's width. Standing in the
+ * middle of a carriage is also simply where a passenger stands, and it means
+ * the walk to the next car passes through a room rather than at a wall.
+ *
+ * Stepping back scales the whole wall uniformly, so nothing about the poster
+ * layout changes except its size, and `PANEL_FONT` buys most of that back.
  */
 
 /** Interior width, wall to wall. */
@@ -49,10 +52,11 @@ export const VESTIBULE_D = 460;
 /** Distance between one car's reading position and the next. */
 export const PITCH = CAR_D + VESTIBULE_D;
 
-/** How far the parked camera stands off the bulkhead it is reading. Must stay
- *  comfortably above `PERSPECTIVE * (CAR_W / STAGE_W)` — below that the room
- *  disappears behind the end wall. See the note at the top. */
-export const READ_GAP = 900;
+/** How far the parked camera stands off the bulkhead it is reading — the middle
+ *  of the car, which is where you would actually stand. Must stay comfortably
+ *  above `PERSPECTIVE * (CAR_W / STAGE_W)`: below that the room disappears
+ *  behind the end wall. See the note at the top. */
+export const READ_GAP = CAR_D / 2;
 
 /** Focal length. Short enough that the side walls converge and the carriage has
  *  depth; long enough that the far wall does not smear. */
@@ -78,14 +82,22 @@ export const HORIZON = PERSPECTIVE * (CAR_W / STAGE_W) - PERSPECTIVE;
  * Below this the stage scales down far enough that poster text stops being
  * legible, so narrow screens are sent to the readable page instead.
  *
- * Raised from 900 along with `READ_GAP`. Stepping the camera back cost about
- * 15% of on-screen text size at every viewport — measured, same paragraph, same
- * car: a line of poster prose went 22.7px to 19.0px at 1440 wide — so the width
- * at which type hits the same floor moved up by the same proportion. Leaving it
- * at 900 would have kept the cutoff where it was and quietly let the text
- * through it get smaller.
+ * Raised twice, each time by measurement rather than by feel: 900 -> 1100 when
+ * the camera stepped back to 900, and 1100 -> this when it went to the middle
+ * of the car. Both times the same paragraph in the same car was measured
+ * against the deployed build and the cutoff moved by the proportion the type
+ * lost — 22.7px to 19.0px the first time, 20.4px to 16.8px the second.
+ *
+ * This is the real bill for standing in the middle of the carriage, and it is
+ * not small: at 1280 wide a line of poster prose lands at 15px, under the floor
+ * the site has held since it was built, so a 1366x768 laptop now gets the
+ * readable page instead of the train. That is the honest outcome — a carriage
+ * you cannot read is worse than no carriage — but if the train should reach
+ * those screens again, the lever is `READ_GAP`, or a wider `CAR_W` giving the
+ * poster panels more room so `PANEL_FONT` can rise without the prose
+ * overflowing.
  */
-export const MIN_TRAIN_WIDTH = 1100;
+export const MIN_TRAIN_WIDTH = 1400;
 
 /** Where you stand before boarding: outside car 01, short of its doorway. */
 export const PLATFORM_Z = -2600;
@@ -138,14 +150,16 @@ export const HEADER_H = CAR_H - DOOR_H;
  *  poster is sized in `em` against this, so the whole hierarchy scales from one
  *  number — see `posters/Plate.tsx`.
  *
- *  Raised from 26 when the camera stepped back to `READ_GAP` 900. Stepping back
- *  shrinks the whole wall uniformly, poster and panel alike, so the layout was
- *  untouched and only its on-screen size fell; this buys most of it back — the
- *  net loss is about 15% rather than 27%. It is not a free trade: the type is
- *  now larger relative to the panel holding it, so the measure is narrower and
- *  the longest paragraph on the train sets in six lines where it used to take
- *  five. */
-export const PANEL_FONT = 30;
+ *  Raised twice as the camera stepped back — 26, then 30, now this. Stepping
+ *  back shrinks the whole wall uniformly, poster and panel alike, so the layout
+ *  is untouched and only its on-screen size falls; this buys most of it back.
+ *
+ *  It is not a free trade. The type gets larger relative to the panel holding
+ *  it each time, so the measure narrows and the longest paragraph on the train
+ *  takes more lines. That is the ceiling on this number: past it the prose
+ *  stops fitting the panel, and the answer becomes smaller text rather than a
+ *  bigger font. */
+export const PANEL_FONT = 28;
 
 /** Local z of a car's geometric centre, measured from its reading position. */
 export const CAR_CENTER_Z = (CAR_D - 2 * READ_GAP) / 2;

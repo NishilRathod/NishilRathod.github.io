@@ -187,7 +187,9 @@ describe("the reading position", () => {
 
   it("still stands inside the car it is reading", () => {
     // Far enough back to see the room, near enough that you have not reversed
-    // out through the gangway behind you.
-    expect(READ_GAP).toBeLessThan(CAR_D / 2);
+    // out through the gangway behind you. The middle of the car is the intent
+    // and therefore the limit — past halfway you are reading the wall from the
+    // far end of somebody else's compartment.
+    expect(READ_GAP).toBeLessThanOrEqual(CAR_D / 2);
   });
 });

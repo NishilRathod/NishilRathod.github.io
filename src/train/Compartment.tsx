@@ -55,7 +55,7 @@ export function Compartment({
       style={{ transformStyle: "preserve-3d", transform: `translateZ(${-index * PITCH}px)` }}
     >
       {near ? <Shell car={car} /> : null}
-      <Bulkhead car={car} nextDestination={nextDestination} isCurrent={isCurrent} />
+      <Bulkhead car={car} index={index} nextDestination={nextDestination} isCurrent={isCurrent} />
     </section>
   );
 }
