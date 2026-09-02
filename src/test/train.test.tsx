@@ -100,6 +100,77 @@ describe("the whole train is always in the document", () => {
   });
 });
 
+/**
+ * The performance characteristics, asserted rather than assumed.
+ *
+ * Both of these were real defects that shipped, and neither is visible from
+ * inside the app: the page just gradually feels worse and nobody can say why.
+ * They only show up under a profiler, so they belong in a test where they show
+ * up in a second instead.
+ */
+describe("the render loop costs nothing while you are parked", () => {
+  it("stops scheduling frames once the camera has settled, and wakes on input", () => {
+    // A loop that runs forever restyles the whole carriage sixty times a second
+    // for a scene that is not moving. Standing still is the state a visitor
+    // spends nearly all of their time in, so it has to be the cheap one.
+    renderTrain({ reduced: true });
+
+    advance(200);
+    expect(frames).toHaveLength(0);
+
+    fireEvent.keyDown(window, { code: "KeyW" });
+    expect(frames.length).toBeGreaterThan(0);
+
+    advance(200);
+    expect(currentCar()).toBe(`Car 02, ${compartments[1].destination}`);
+    expect(frames).toHaveLength(0);
+  });
+
+  it("drives the windows from CSS, not from a custom property written per frame", () => {
+    // `--streak-far` and `--streak-near` were set on the element every car
+    // inherits from, once per frame. An inherited custom property invalidates
+    // the style of its whole subtree, so those two writes restyled ~800
+    // elements sixty times a second — about 40% of the frame budget, spent
+    // while parked on the platform with nothing moving.
+    const { container } = renderTrain();
+    advance(500);
+
+    const styled = container.querySelectorAll<HTMLElement>("[style]");
+    for (const element of styled) {
+      expect(element.style.getPropertyValue("--streak-far")).toBe("");
+      expect(element.style.getPropertyValue("--streak-near")).toBe("");
+    }
+
+    // And the strips are still there, animated by the stylesheet.
+    expect(container.querySelectorAll(".streak-far").length).toBeGreaterThan(0);
+  });
+
+  it("builds the room around the nearby cars only, and never culls a word", () => {
+    // A shell is sixteen planes, two of them 1920x2400, and each is its own
+    // compositor layer because it has to be depth-sorted. Eight of them was
+    // ~650MB of backing store against a GPU budget of a few hundred, so Chrome
+    // sat there evicting tiles and rasterising them again — the "crumbling".
+    //
+    // What makes this safe is that the camera only ever translates: the view
+    // forward stops dead at the next bulkhead and its shut doors, so a car two
+    // along is behind an opaque wall whether it is built or not.
+    const { container } = renderTrain({ reduced: true });
+    advance(16);
+
+    // Parked in car 01, so cars 01 and 02 have rooms and the other six do not.
+    const windowsPerCar = 6;
+    expect(container.querySelectorAll(".streak-far")).toHaveLength(2 * windowsPerCar);
+
+    // The half that must never be conditional: all eight cars, and the words on
+    // the terminus poster while standing at the other end of the train.
+    expect(screen.getAllByRole("region")).toHaveLength(compartments.length);
+    const terminus = compartments[compartments.length - 1];
+    expect(
+      screen.getByRole("region", { name: `Car ${terminus.code} — ${terminus.destination}` }),
+    ).toBeInTheDocument();
+  });
+});
+
 describe("driving", () => {
   // Reduced motion turns each press into a discrete arrival, which is the same
   // input path without a second of travel to simulate first.
@@ -127,6 +198,20 @@ describe("driving", () => {
     fireEvent.keyDown(window, { code: "ArrowUp" });
     advance(16);
     expect(currentCar()).toBe(`Car 02, ${compartments[1].destination}`);
+  });
+
+  it("remembers a number pressed on the platform, across the boarding move", () => {
+    // Full motion, so the scripted 1.6s boarding move actually runs. The jump
+    // used to be read at the top of the very first tick and dropped by the
+    // boarding branch a line later, so the one shortcut the opening hint
+    // advertises put you in car 01 and looked like a dead key.
+    renderTrain();
+    advance(16);
+
+    fireEvent.keyDown(window, { code: "Digit4" });
+    advance(4000);
+
+    expect(currentCar()).toBe(`Car 04, ${compartments[3].destination}`);
   });
 
   it("jumps straight to a car on a number key", () => {

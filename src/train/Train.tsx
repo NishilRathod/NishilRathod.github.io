@@ -19,13 +19,22 @@ import { useTrainInput } from "./useTrainInput";
  *            is what makes it a uniform zoom. Scaling inside would change the
  *            focal length with the window size and warp the room as you resize.
  *   viewport carries the perspective
- *   cabin    the sway of the train on its bogies
+ *   bob      the rise of the train on its bogies
+ *   roll     and its roll — a separate element because the two are sines at
+ *            different frequencies, so they cannot be one animation, and both
+ *            are CSS so the render loop never has to wake up for them
  *   world    the camera: one translateZ, written by the render loop
  *
  * Every car is rendered, not just the ones nearby. Eight of them is a couple of
  * hundred elements, and keeping them all mounted means the whole résumé stays
  * in the document — findable with Ctrl+F, reachable by a screen reader — rather
  * than blinking in and out as you drive.
+ *
+ * What is culled is scenery, never content. Only the car you are in and its two
+ * neighbours get lit windows, and everything past that gets a dark pane: the
+ * detail is invisible at that distance anyway, and paying for it meant 96 live
+ * gradients on screen at once. The bulkheads and every poster on them render
+ * regardless of where you are standing.
  */
 
 /** Fills the window rather than fitting inside it; letterboxing a first-person
@@ -42,7 +51,6 @@ const carFromHash = () => {
 export function Train({ reduced, onLeave }: { reduced: boolean; onLeave: () => void }) {
   const stageRef = useRef<HTMLDivElement>(null);
   const frameRef = useRef<HTMLDivElement>(null);
-  const cabinRef = useRef<HTMLDivElement>(null);
   const worldRef = useRef<HTMLDivElement>(null);
 
   const intentRef = useRef<Intent>(0);
@@ -51,9 +59,8 @@ export function Train({ reduced, onLeave }: { reduced: boolean; onLeave: () => v
   const [startIndex] = useState(carFromHash);
   const [showHint, setShowHint] = useState(true);
 
-  const { index, boarded, board, jumpTo } = useTrainCamera({
+  const { index, boarded, board, jumpTo, wake } = useTrainCamera({
     worldRef,
-    cabinRef,
     carCount: compartments.length,
     intentRef,
     impulseRef,
@@ -83,6 +90,7 @@ export function Train({ reduced, onLeave }: { reduced: boolean; onLeave: () => v
     indexRef,
     onJump: jumpTo,
     onFirstMove,
+    wake,
   });
 
   // Scale the composed stage to cover the window.
@@ -138,21 +146,24 @@ export function Train({ reduced, onLeave }: { reduced: boolean; onLeave: () => v
           className="relative size-full"
           style={{ perspective: PERSPECTIVE, perspectiveOrigin: "50% 50%" }}
         >
-          <div ref={cabinRef} className="absolute inset-0" style={{ transformStyle: "preserve-3d" }}>
-            <div
-              ref={worldRef}
-              className="absolute inset-0"
-              style={{ transformStyle: "preserve-3d" }}
-            >
-              {compartments.map((car, position) => (
-                <Compartment
-                  key={car.id}
-                  car={car}
-                  index={position}
-                  nextDestination={compartments[position + 1]?.destination ?? null}
-                  isCurrent={position === index}
-                />
-              ))}
+          <div className="cabin-bob absolute inset-0" style={{ transformStyle: "preserve-3d" }}>
+            <div className="cabin-roll absolute inset-0" style={{ transformStyle: "preserve-3d" }}>
+              <div
+                ref={worldRef}
+                className="absolute inset-0"
+                style={{ transformStyle: "preserve-3d" }}
+              >
+                {compartments.map((car, position) => (
+                  <Compartment
+                    key={car.id}
+                    car={car}
+                    index={position}
+                    nextDestination={compartments[position + 1]?.destination ?? null}
+                    isCurrent={position === index}
+                    near={Math.abs(position - index) <= 1}
+                  />
+                ))}
+              </div>
             </div>
           </div>
         </div>

@@ -1,15 +1,11 @@
 import { type RefObject, useCallback, useEffect, useRef, useState } from "react";
 
-import {
-  BOARDING_DURATION,
-  PLATFORM_Z,
-  STREAK_FAR_PERIOD,
-  STREAK_NEAR_PERIOD,
-} from "../lib/train";
+import { BOARDING_DURATION, PLATFORM_Z } from "../lib/train";
 import {
   aimAt,
   carIndexAt,
   initialState,
+  isAtRest,
   settleAt,
   step,
   type CameraState,
@@ -26,22 +22,20 @@ import {
  * this being smooth and being a slideshow. The only thing that reaches React is
  * `index` — which car you are in — and that changes about eight times a visit.
  *
- * The train is always moving. You are walking around inside one that is already
- * under way, so the sway and what goes past the windows are driven by elapsed
- * time and never stop, while W and S move only you. Tying the streaks to your
- * own speed would mean the world outside froze whenever you stopped to read,
- * which is a much stranger thing to look at than it sounds.
+ * The train is always moving, but this loop is not. The sway of the carriage
+ * and what goes past the windows are CSS animations (see `.cabin-bob` and
+ * `.streak` in `index.css`), so they keep running on the compositor whether or
+ * not anything here is awake, and the world outside still does not freeze when
+ * you stop to read. That leaves this loop with exactly one job — moving YOU —
+ * and it can therefore stop the moment you are parked, which is the state a
+ * visitor spends nearly all their time in.
+ *
+ * Driving the sway and the streaks from here was the single most expensive
+ * thing on the page. It wrote two custom properties per frame onto the element
+ * every car inherits from, and inherited custom properties invalidate the style
+ * of the entire subtree: ~800 elements restyled sixty times a second, about 40%
+ * of the frame budget, running even while standing still on the platform.
  */
-
-/** Roll and rise of the carriage on its bogies. Small: this is a suggestion of
- *  movement, and anything you can actually measure by eye becomes nausea. */
-const ROLL_DEG = 0.32;
-const BOB_PX = 3.4;
-
-/** How fast the two window layers pass. The ratio between them is the parallax
- *  that reads as distance; the absolute values are just "fast". */
-const STREAK_FAR_RATE = 150;
-const STREAK_NEAR_RATE = 620;
 
 /** Decelerating ease for the scripted boarding move. */
 const easeOut = (t: number) => 1 - Math.pow(1 - t, 3);
@@ -50,7 +44,6 @@ type Phase = "platform" | "boarding" | "riding";
 
 export function useTrainCamera({
   worldRef,
-  cabinRef,
   carCount,
   intentRef,
   impulseRef,
@@ -58,7 +51,6 @@ export function useTrainCamera({
   startIndex,
 }: {
   worldRef: RefObject<HTMLDivElement | null>;
-  cabinRef: RefObject<HTMLDivElement | null>;
   carCount: number;
   intentRef: RefObject<Intent>;
   /** Velocity handed over by the wheel or a drag, consumed on the next frame. */
@@ -83,6 +75,18 @@ export function useTrainCamera({
   const [boarded, setBoarded] = useState(phaseRef.current === "riding");
 
   /**
+   * Restart the loop.
+   *
+   * Since the loop parks itself, every route that changes what it would compute
+   * has to be able to wake it — otherwise a key pressed while stopped sets an
+   * intent nothing is reading. Held in a ref because `start` only exists inside
+   * the effect, and the identity of what callers get has to stay stable so the
+   * input listeners are not rebound.
+   */
+  const wakeRef = useRef<() => void>(() => {});
+  const wake = useCallback(() => wakeRef.current(), []);
+
+  /**
    * Leave the platform.
    *
    * Called the moment the visitor does anything at all, rather than left to the
@@ -94,7 +98,8 @@ export function useTrainCamera({
    */
   const board = useCallback(() => {
     if (phaseRef.current === "platform") phaseRef.current = "boarding";
-  }, []);
+    wake();
+  }, [wake]);
 
   const jumpTo = useCallback(
     (target: number) => {
@@ -107,50 +112,38 @@ export function useTrainCamera({
 
   useEffect(() => {
     const world = worldRef.current;
-    const cabin = cabinRef.current;
-    if (!world || !cabin) return;
+    if (!world) return;
 
     let frame = 0;
     let last = 0;
     let elapsed = 0;
     let boardingStart = 0;
 
-    const render = (z: number, time: number) => {
+    const render = (z: number) => {
       world.style.transform = `translate3d(0px, 0px, ${z}px)`;
-
-      if (reduced) return;
-
-      cabin.style.transform =
-        `translateY(${Math.sin(time * 1.7) * BOB_PX}px) ` +
-        `rotateZ(${Math.sin(time * 1.1) * ROLL_DEG}deg)`;
-
-      // Written once here and inherited by every window on the train, so sixty
-      // panes of glass cost two style writes rather than sixty.
-      world.style.setProperty(
-        "--streak-far",
-        `${-((time * STREAK_FAR_RATE) % STREAK_FAR_PERIOD)}px`,
-      );
-      world.style.setProperty(
-        "--streak-near",
-        `${-((time * STREAK_NEAR_RATE) % STREAK_NEAR_PERIOD)}px`,
-      );
     };
 
-    const tick = (now: number) => {
-      frame = requestAnimationFrame(tick);
+    /** Nothing left to integrate: parked, hands off the controls, no jump
+     *  queued. The loop stops here and `wake` is what starts it again. */
+    const settled = () =>
+      intentRef.current === 0 &&
+      impulseRef.current === 0 &&
+      pendingJumpRef.current === null &&
+      isAtRest(stateRef.current);
 
+    const tick = (now: number) => {
       const dt = last ? (now - last) / 1000 : 0;
       last = now;
       elapsed += dt;
-
-      const jump = pendingJumpRef.current;
-      pendingJumpRef.current = null;
 
       if (phaseRef.current === "platform") {
         if (intentRef.current !== 0 || impulseRef.current !== 0) {
           phaseRef.current = "boarding";
         } else {
-          render(PLATFORM_Z, elapsed);
+          // The platform is a still frame. Draw it once and stop — the sway
+          // and the streaks are CSS and carry on without us.
+          render(PLATFORM_Z);
+          frame = 0;
           return;
         }
       }
@@ -160,7 +153,8 @@ export function useTrainCamera({
         const t = (elapsed - boardingStart) / BOARDING_DURATION;
 
         if (t < 1) {
-          render(PLATFORM_Z * (1 - easeOut(t)), elapsed);
+          render(PLATFORM_Z * (1 - easeOut(t)));
+          frame = requestAnimationFrame(tick);
           return;
         }
 
@@ -168,6 +162,15 @@ export function useTrainCamera({
         setBoarded(true);
         stateRef.current = initialState(0);
       }
+
+      // Read only once there is somewhere for it to go. Taking it at the top of
+      // the tick meant a jump requested from the platform — pressing 3 on the
+      // opening screen, which is exactly what the hint invites — was cleared on
+      // the first frame and then thrown away by the boarding move that ran for
+      // the next 1.6 seconds, landing you in car 01 with no sign anything had
+      // happened.
+      const jump = pendingJumpRef.current;
+      pendingJumpRef.current = null;
 
       if (reduced) {
         // Cut rather than glide. A long smooth translation across the whole
@@ -188,10 +191,16 @@ export function useTrainCamera({
         stateRef.current = step(stateRef.current, intentRef.current, dt, carCount);
       }
 
-      render(stateRef.current.z, elapsed);
+      render(stateRef.current.z);
 
       const at = carIndexAt(stateRef.current.z, carCount);
       setIndex((current) => (current === at ? current : at));
+
+      if (settled()) {
+        frame = 0;
+        return;
+      }
+      frame = requestAnimationFrame(tick);
     };
 
     const start = () => {
@@ -206,19 +215,24 @@ export function useTrainCamera({
       frame = 0;
     };
 
+    wakeRef.current = start;
+
     // A hidden tab should not burn battery animating a train nobody can see.
+    // Waking a settled loop on the way back is harmless: it draws one frame,
+    // finds nothing to do, and parks again.
     const onVisibility = () => (document.hidden ? stop() : start());
     document.addEventListener("visibilitychange", onVisibility);
 
-    // Under reduced motion nothing animates on its own, so one frame is enough
-    // to place the camera — but the loop still has to run to react to a jump.
+    // One frame is enough to place the camera; the loop parks itself after it
+    // unless something is actually moving.
     start();
 
     return () => {
       stop();
+      wakeRef.current = () => {};
       document.removeEventListener("visibilitychange", onVisibility);
     };
-  }, [worldRef, cabinRef, carCount, intentRef, impulseRef, reduced]);
+  }, [worldRef, carCount, intentRef, impulseRef, reduced]);
 
-  return { index, boarded, board, jumpTo };
+  return { index, boarded, board, jumpTo, wake };
 }

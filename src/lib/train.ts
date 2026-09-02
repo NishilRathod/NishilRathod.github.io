@@ -106,7 +106,9 @@ export const VESTIBULE_W = 620;
 export const VESTIBULE_H = 940;
 export const VESTIBULE_CENTER_Z = CAR_D - READ_GAP + VESTIBULE_D / 2;
 
-/** How far the streak gradients tile, in scene pixels. The render loop wraps
- *  the offsets against these so a long journey never scrolls them off. */
-export const STREAK_FAR_PERIOD = 420;
-export const STREAK_NEAR_PERIOD = 190;
+// How far the streak gradients tile used to live here, for a render loop that
+// wrapped the offsets by hand every frame. The strips are CSS animations now,
+// so the period is a number the stylesheet has to agree with itself about — the
+// gradient tiles at it and the keyframe translates by it — and splitting that
+// across two files could only ever put them out of step. See `.streak-far` and
+// `.streak-near` in `index.css`.

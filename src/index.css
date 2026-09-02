@@ -54,7 +54,6 @@
     color: var(--color-text);
     font-family: var(--font-sans);
     font-synthesis-weight: none;
-    text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
   }
 
@@ -120,26 +119,40 @@
 
   /* Every plane in the scene is a fixed-size box centred on its parent's
      origin, then pushed into place by a transform. Centring here rather than in
-     each transform keeps the transforms readable as pure placement. */
+     each transform keeps the transforms readable as pure placement.
+
+     Deliberately NOT `preserve-3d` and NOT `backface-visibility: hidden`. A
+     plane is a leaf of the 3D tree — everything inside one is flat against it —
+     so neither buys anything, and both force the compositor to give all 72 of
+     them their own layer. That cost 299 layers and ~800MB of backing store,
+     which is several times Chrome's tile budget: it evicts tiles and
+     re-rasterises them continuously, and what you see is the carriage
+     shimmering and going soft. Only the sway elements, `world`, and each car's
+     `<section>` genuinely establish a 3D context, and those set it themselves. */
   .plane {
     position: absolute;
     left: 50%;
     top: 50%;
-    transform-style: preserve-3d;
-    backface-visibility: hidden;
   }
 
   /* What goes past the windows.
 
      Two strips at different rates — distant lights drifting, near ones tearing
      by. The parallax between them is what sells speed; a single layer just
-     reads as a moving texture. Both are driven by `--streak-far` and
-     `--streak-near`, written once per frame on the world element and inherited
-     by all of them, so sixty of these cost two style writes rather than sixty. */
+     reads as a moving texture.
+
+     Both are plain CSS animations, which is the whole point: they translate by
+     exactly one period of their own gradient, so the loop is seamless, and the
+     compositor runs them on its own thread without waking the main one. The
+     render loop used to drive them by writing `--streak-far` and `--streak-near`
+     on the world element every frame, on the theory that two writes was cheaper
+     than sixty. It is the opposite — those are INHERITED custom properties, so
+     each write invalidated style for all ~800 elements in the carriage sixty
+     times a second and burned about 40% of the frame budget doing it, even
+     while parked on the platform with nothing moving. */
   .streak {
     position: absolute;
     inset: 0;
-    will-change: transform;
   }
 
   .streak-far {
@@ -149,20 +162,46 @@
       color-mix(in srgb, var(--color-accent) 42%, transparent) 300px 308px,
       transparent 308px 420px
     );
-    transform: translateX(var(--streak-far, 0px));
+    /* One 420px tile of the gradient above, per 2.8s: 150px/s. */
+    animation: streak-far 2.8s linear infinite;
     opacity: 0.55;
   }
 
+  /* The near strip is soft because its gradient is soft, not because a filter
+     softens it afterwards. It used to carry `blur(3px)`, and with one of these
+     in every pane that was 48 separate render surfaces each taking a blur pass
+     per frame — on its own worth 17ms a frame. */
   .streak-near {
     background-image: repeating-linear-gradient(
       90deg,
-      transparent 0 150px,
-      color-mix(in srgb, var(--color-accent) 26%, transparent) 150px 162px,
-      transparent 162px 190px
+      transparent 0 148px,
+      color-mix(in srgb, var(--color-accent) 7%, transparent) 152px,
+      color-mix(in srgb, var(--color-accent) 26%, transparent) 156px 160px,
+      color-mix(in srgb, var(--color-accent) 7%, transparent) 164px,
+      transparent 168px 190px
     );
-    transform: translateX(var(--streak-near, 0px));
-    filter: blur(3px);
+    /* One 190px tile, per 0.3065s: 620px/s. The ratio to the far strip is
+       the parallax; the absolute values are just "fast". */
+    animation: streak-near 0.3065s linear infinite;
     opacity: 0.5;
+  }
+
+  /* The sway of the carriage on its bogies.
+
+     Two sines at different frequencies, so it cannot be one animation: the bob
+     and the roll drift in and out of phase, which is what stops it reading as a
+     metronome. Both were computed per frame in JS and written to one element's
+     transform; as CSS they are two compositor animations that cost the main
+     thread nothing and let the render loop stop entirely once you are parked.
+
+     `ease-in-out` between the quarter-points is a sine to within a fraction of
+     a pixel at this amplitude. */
+  .cabin-bob {
+    animation: cabin-bob 3.696s ease-in-out infinite;
+  }
+
+  .cabin-roll {
+    animation: cabin-roll 5.712s ease-in-out infinite;
   }
 
   /* The destination board above each door. Amber on black, scanned, and the one
@@ -214,7 +253,6 @@
       var(--color-car-lacquer) 100%
     );
     transition: transform 620ms cubic-bezier(0.22, 0.61, 0.36, 1);
-    will-change: transform;
   }
 
   .door-leaf-left {
@@ -255,6 +293,50 @@
     .mote {
       display: none;
     }
+  }
+}
+
+/* Exactly one period of each gradient, so the strip lands where it started and
+   the seam is never visible. These distances have to match the tile widths in
+   `.streak-far` and `.streak-near` above — change one and change the other. */
+@keyframes streak-far {
+  to {
+    transform: translateX(-420px);
+  }
+}
+
+@keyframes streak-near {
+  to {
+    transform: translateX(-190px);
+  }
+}
+
+/* sin(t * 1.7) * 3.4px — quarter-points of one 3.696s period. */
+@keyframes cabin-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  25% {
+    transform: translateY(3.4px);
+  }
+  75% {
+    transform: translateY(-3.4px);
+  }
+}
+
+/* sin(t * 1.1) * 0.32deg — a slower period than the bob, so the two never
+   settle into a repeating pattern you can see. */
+@keyframes cabin-roll {
+  0%,
+  100% {
+    transform: rotateZ(0deg);
+  }
+  25% {
+    transform: rotateZ(0.32deg);
+  }
+  75% {
+    transform: rotateZ(-0.32deg);
   }
 }
 

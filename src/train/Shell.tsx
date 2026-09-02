@@ -35,7 +35,9 @@ function Window() {
       className="absolute overflow-hidden rounded-[26px] border-[6px] border-black/50 bg-[#03060f]"
       style={{ width: WINDOW_W, height: WINDOW_H, top: 250 }}
     >
-      {/* The night outside is the only cold light in the carriage. */}
+      {/* The night outside is the only cold light in the carriage. Both strips
+          are animated by the stylesheet rather than by the render loop — see
+          `.streak` in `index.css` for why that matters so much. */}
       <div className="streak streak-far" />
       <div className="streak streak-near" />
 

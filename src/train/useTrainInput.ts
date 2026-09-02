@@ -14,6 +14,11 @@ import type { Intent } from "../lib/trainCamera";
  *
  * Nothing here writes React state. The loop reads these refs directly, so
  * holding W for two seconds costs zero renders.
+ *
+ * Because the render loop parks itself once you stop moving, everything that
+ * sets an intent or an impulse has to `wake` it too. A ref written while
+ * nothing is reading it is the failure mode this guards against, and it is a
+ * silent one — the input registers, the train just never moves.
  */
 
 /** Scroll notches are around 100 units. This turns one notch into a shove of
@@ -38,6 +43,7 @@ export function useTrainInput({
   indexRef,
   onJump,
   onFirstMove,
+  wake,
 }: {
   enabled: boolean;
   reduced: boolean;
@@ -49,6 +55,8 @@ export function useTrainInput({
   indexRef: RefObject<number>;
   onJump: (index: number) => void;
   onFirstMove: () => void;
+  /** Restarts the render loop, which parks itself whenever you are stopped. */
+  wake: () => void;
 }) {
   const movedRef = useRef(false);
 
@@ -65,9 +73,12 @@ export function useTrainInput({
       // Reduced motion has no notion of holding a direction — there is no
       // travel to hold through, only arrival.
       if (reduced) onJump(Math.min(Math.max(indexRef.current + direction, 0), carCount - 1));
-      else intentRef.current = direction;
+      else {
+        intentRef.current = direction;
+        wake();
+      }
     },
-    [reduced, carCount, indexRef, intentRef, onJump, noteMovement],
+    [reduced, carCount, indexRef, intentRef, onJump, noteMovement, wake],
   );
 
   const release = useCallback(() => {
@@ -133,6 +144,7 @@ export function useTrainInput({
       noteMovement();
       const shove = Math.max(-WHEEL_MAX, Math.min(WHEEL_MAX, event.deltaY * WHEEL_GAIN));
       impulseRef.current += shove;
+      wake();
     };
 
     // A key held while the window loses focus never gets its keyup, which would
@@ -165,6 +177,7 @@ export function useTrainInput({
       // Dragging up pulls the train toward you, the same direction a scroll
       // gesture moves a page.
       impulseRef.current += -dy * DRAG_GAIN;
+      wake();
     };
 
     const onPointerUp = (event: PointerEvent) => {
@@ -193,7 +206,18 @@ export function useTrainInput({
       stage?.removeEventListener("pointercancel", onPointerUp);
       intentRef.current = 0;
     };
-  }, [enabled, carCount, stageRef, intentRef, impulseRef, onJump, press, release, noteMovement]);
+  }, [
+    enabled,
+    carCount,
+    stageRef,
+    intentRef,
+    impulseRef,
+    onJump,
+    press,
+    release,
+    noteMovement,
+    wake,
+  ]);
 
   return { press, release };
 }
