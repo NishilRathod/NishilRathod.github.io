@@ -72,7 +72,7 @@ function Window() {
         style={{
           background:
             "linear-gradient(160deg, #ffffff14 0%, transparent 38%), " +
-            "linear-gradient(to top, color-mix(in srgb, var(--color-lamp) 10%, transparent), transparent 30%)",
+            "linear-gradient(to top, #ffd9a31a, transparent 30%)",
         }}
       />
       <div className="absolute inset-0 shadow-[inset_0_0_60px_rgba(0,0,0,0.85)]" />
@@ -125,8 +125,7 @@ function SeatBank({ side }: { side: "left" | "right" }) {
             `#0d0a12 ${SEAT_PITCH - 64}px ${SEAT_PITCH - 6}px, ` +
             `#241d2b ${SEAT_PITCH - 6}px ${SEAT_PITCH}px), ` +
             "linear-gradient(to bottom, " +
-            "color-mix(in srgb, var(--color-lamp) 10%, transparent) 0%, " +
-            "transparent 26%, #00000066 100%)",
+            "#ffd9a31a 0%, transparent 26%, #00000066 100%)",
         }}
       >
         {/* The lit top edge of each backrest, broken by the same slots, so the
@@ -136,7 +135,7 @@ function SeatBank({ side }: { side: "left" | "right" }) {
           style={{
             background:
               `repeating-linear-gradient(90deg, ` +
-              `color-mix(in srgb, var(--color-lamp) 30%, #2b2333) 0 ${SEAT_PITCH - 64}px, ` +
+              `#6b5a55 0 ${SEAT_PITCH - 64}px, ` +
               `transparent ${SEAT_PITCH - 64}px ${SEAT_PITCH}px)`,
           }}
         />
@@ -183,12 +182,10 @@ function SideWall({ car, side }: { car: Compartment; side: "left" | "right" }) {
       transform={`translateX(${(side === "left" ? -1 : 1) * (CAR_W / 2)}px) translateZ(${CAR_CENTER_Z}px) rotateY(${inward}deg)`}
       className="overflow-hidden"
       style={{
-        background:
-          "linear-gradient(to bottom, " +
-          "color-mix(in srgb, var(--color-lamp) 14%, var(--color-car-shell)) 0%, " +
-          "var(--color-car-shell) 26%, " +
-          "var(--color-car-lacquer) 78%, " +
-          "#0d0b09 100%)",
+        // Two stops. The four-stop version described the same fall of light to
+        // within a shade nobody can pick out at this distance, and stop count
+        // is most of what a gradient costs to rasterise.
+        background: "linear-gradient(to bottom, #3b3734, #100e0c)",
       }}
     >
       {/* Handrail: one line, catching the strip light along its top edge. */}
@@ -197,7 +194,7 @@ function SideWall({ car, side }: { car: Compartment; side: "left" | "right" }) {
         style={{
           top: 150,
           background:
-            "linear-gradient(to bottom, color-mix(in srgb, var(--color-lamp) 55%, transparent), #00000060)",
+            "linear-gradient(to bottom, #ffd9a38c, #00000060)",
         }}
       />
 
@@ -259,7 +256,7 @@ export function Shell({ car }: { car: Compartment }) {
         style={{
           background:
             "linear-gradient(90deg, #111318 0 42%, " +
-            "color-mix(in srgb, var(--color-lamp) 40%, transparent) 47% 53%, " +
+            "#ffd9a366 47% 53%, " +
             "#111318 58% 100%)",
         }}
       />
@@ -272,11 +269,11 @@ export function Shell({ car }: { car: Compartment }) {
         h={CAR_D}
         transform={`translateY(${CAR_H / 2}px) translateZ(${CAR_CENTER_Z}px) rotateX(90deg)`}
         style={{
-          background:
-            "linear-gradient(90deg, transparent 0 30%, " +
-            "color-mix(in srgb, var(--color-lamp) 9%, transparent) 50%, " +
-            "transparent 70% 100%), " +
-            "linear-gradient(to bottom, #14161b, #08090c)",
+          // One gradient, not two stacked: the lamp pooling down the aisle is
+          // folded into the base rather than laid over it. Stacked backgrounds
+          // are rasterised in sequence every time the plane rescales, and the
+          // camera rescales every plane every frame.
+          background: "linear-gradient(90deg, #101217 0 34%, #1c1d21 50%, #101217 66% 100%)",
         }}
       />
 
@@ -307,9 +304,12 @@ export function Shell({ car }: { car: Compartment }) {
           h={VESTIBULE_H}
           transform={`translateX(${(side === "left" ? -1 : 1) * (VESTIBULE_W / 2)}px) translateZ(${VESTIBULE_CENTER_Z}px) rotateY(${side === "left" ? 90 : -90}deg)`}
           style={{
-            background:
-              "linear-gradient(to bottom, #1a1c21, #0a0b0e), " +
-              "repeating-linear-gradient(90deg, #ffffff08 0 2px, transparent 2px 22px)",
+            // Two stops, no pinstripe. A 2px repeating gradient over a
+            // 460x940 plane was the most expensive surface in the carriage to
+            // re-rasterise and, seen edge-on through a doorway, entirely
+            // invisible — it cost about eight points of dropped frames on a
+            // drive of the train to draw nothing anybody could see.
+            background: "linear-gradient(to bottom, #1a1c21, #0a0b0e)",
           }}
         />
       ))}

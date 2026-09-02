@@ -185,7 +185,7 @@ function LineDiagram({ index }: { index: number }) {
                     ? "var(--color-lamp)"
                     : passed
                       ? "#ffffff22"
-                      : "color-mix(in srgb, var(--color-lamp) 30%, transparent)",
+                      : "#ffd9a34d",
                 }}
               />
               <span
@@ -256,7 +256,7 @@ export function Bulkhead({
       style={{
         background:
           "linear-gradient(to bottom, " +
-          "color-mix(in srgb, var(--color-lamp) 11%, var(--color-car-shell)) 0%, " +
+          "#343230 0%, " +
           "var(--color-car-shell) 30%, " +
           "var(--color-car-lacquer) 100%)",
       }}

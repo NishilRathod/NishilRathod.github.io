@@ -117,7 +117,19 @@
      The carriage
      --------------------------------------------------------------------- */
 
-  /* Every plane in the scene is a fixed-size box centred on its parent's
+  /* NOTE ON COLOURS IN THE SCENE, before anyone tidies them back.
+     Every gradient painted on a carriage surface uses literal hex, not
+     `color-mix()` and not `var(--color-*)`, and that is a performance
+     decision rather than an oversight. Moving the camera rescales every plane
+     every frame, so each one's gradient is rasterised again — and measured on
+     a drive of the whole train, a single `color-mix()` stop costs about as much
+     as three extra colour stops: a two-stop gradient dropped 4.9% of frames
+     when written in hex and 16.7% when one of those two stops was a
+     `color-mix()`. Flattening the lot took the drive from 19.4% dropped frames
+     to under 5%. The palette still lives in `@theme` above; these are its
+     values, resolved by hand, and the comment on each one says which.
+
+     Every plane in the scene is a fixed-size box centred on its parent's
      origin, then pushed into place by a transform. Centring here rather than in
      each transform keeps the transforms readable as pure placement.
 
@@ -159,7 +171,7 @@
     background-image: repeating-linear-gradient(
       90deg,
       transparent 0 300px,
-      color-mix(in srgb, var(--color-accent) 58%, transparent) 300px 308px,
+      #6b8cff94 300px 308px,
       transparent 308px 420px
     );
     /* One 420px tile of the gradient above, per 2.8s: 150px/s. */
@@ -175,9 +187,9 @@
     background-image: repeating-linear-gradient(
       90deg,
       transparent 0 148px,
-      color-mix(in srgb, var(--color-accent) 10%, transparent) 152px,
-      color-mix(in srgb, var(--color-accent) 38%, transparent) 156px 160px,
-      color-mix(in srgb, var(--color-accent) 10%, transparent) 164px,
+      #6b8cff1a 152px,
+      #6b8cff61 156px 160px,
+      #6b8cff1a 164px,
       transparent 168px 190px
     );
     /* One 190px tile, per 0.3065s: 620px/s. The ratio to the far strip is
@@ -200,10 +212,37 @@
      tree on the way past. */
   .is-platform .poster-slot {
     opacity: 0;
+    /* A transparent link is still a link. Without this you can click the ones
+       you cannot see, on the one screen that asks you to press W. */
+    pointer-events: none;
   }
 
   .poster-slot {
     transition: opacity 900ms ease-out;
+  }
+
+  /* Who gets to be clicked.
+
+     `Departure` and `MagneticLink` are real anchors and always were, but
+     nothing on a poster could be clicked: the sway wrappers and the world are
+     full-bleed `inset-0` boxes sitting at the camera plane, and the bulkhead
+     they contain is READ_GAP further back, so all four sat between the viewer
+     and the poster and swallowed the click. `elementFromPoint` at the centre of
+     a link's own box came back with `div.cabin-clatter`.
+
+     Only the posters need to be hit-testable — a wall does nothing when you
+     click it — so the structural boxes step out of hit-testing entirely and
+     the panels opt back in. Drag still works: the events fall through to the
+     stage, which is where the drag handlers already are. */
+  .cabin-bob,
+  .cabin-roll,
+  .cabin-clatter,
+  .train-world {
+    pointer-events: none;
+  }
+
+  .poster-slot {
+    pointer-events: auto;
   }
 
   /* The sway of the carriage on its bogies.
@@ -241,7 +280,7 @@
   .board {
     background-color: #0a0805;
     color: var(--color-amber);
-    text-shadow: 0 0 0.5em color-mix(in srgb, var(--color-amber) 60%, transparent);
+    text-shadow: 0 0 0.5em #ffb02e99;
   }
 
   .board::after {
@@ -280,7 +319,7 @@
     width: 51%;
     background: linear-gradient(
       to bottom,
-      color-mix(in srgb, var(--color-lamp) 9%, var(--color-car-shell)) 0%,
+      #302e2e 0%,
       var(--color-car-shell) 34%,
       var(--color-car-lacquer) 100%
     );

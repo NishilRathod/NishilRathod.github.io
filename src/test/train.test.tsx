@@ -174,6 +174,30 @@ describe("the render loop costs nothing while you are parked", () => {
       screen.getByRole("region", { name: `Car ${terminus.code} — ${terminus.destination}` }),
     ).toBeInTheDocument();
   });
+
+  it("builds the car ahead but never the one behind", () => {
+    // The camera translates and never turns, so the car you just left is behind
+    // your head at every point of the journey. Building it was a third of the
+    // scenery on screen — eight windows and the sixteen animating layers their
+    // streaks run on — for a room nobody can look at.
+    //
+    // Car 01 cannot catch this: there is nothing behind it, so the count is two
+    // either way. It has to be tested from the middle of the train.
+    const { container } = renderTrain({ reduced: true });
+    advance(16);
+
+    fireEvent.keyDown(window, { code: "Digit4" });
+    advance(64);
+
+    const built = [...container.querySelectorAll("section[aria-label]")]
+      .filter((section) => section.querySelector(".streak-far"))
+      .map((section) => section.getAttribute("aria-label"));
+
+    expect(built).toEqual([
+      `Car ${compartments[3].code} — ${compartments[3].destination}`,
+      `Car ${compartments[4].code} — ${compartments[4].destination}`,
+    ]);
+  });
 });
 
 describe("driving", () => {

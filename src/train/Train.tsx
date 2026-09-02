@@ -32,11 +32,16 @@ import { useTrainInput } from "./useTrainInput";
  * in the document — findable with Ctrl+F, reachable by a screen reader — rather
  * than blinking in and out as you drive.
  *
- * What is culled is scenery, never content. Only the car you are in and its two
- * neighbours get lit windows, and everything past that gets a dark pane: the
- * detail is invisible at that distance anyway, and paying for it meant 96 live
- * gradients on screen at once. The bulkheads and every poster on them render
- * regardless of where you are standing.
+ * What is culled is scenery, never content. Only the car you are in and the one
+ * ahead of it get a room built around them; the bulkheads and every poster on
+ * them render wherever you are standing.
+ *
+ * Ahead only, because behind is never visible. The camera translates and never
+ * turns, so the car you just left is behind your head — even caught at the
+ * midpoint of a crossing, its nearest surface is still a couple of hundred
+ * scene-px back. Building it cost a third of the scenery on screen, including
+ * eight windows and the sixteen animating layers their streaks run on, for a
+ * room nobody can look at.
  */
 
 /** Fills the window rather than fitting inside it; letterboxing a first-person
@@ -158,7 +163,7 @@ export function Train({ reduced, onLeave }: { reduced: boolean; onLeave: () => v
               >
                 <div
                   ref={worldRef}
-                  className="absolute inset-0"
+                  className="train-world absolute inset-0"
                   style={{ transformStyle: "preserve-3d" }}
                 >
                   {compartments.map((car, position) => (
@@ -168,7 +173,7 @@ export function Train({ reduced, onLeave }: { reduced: boolean; onLeave: () => v
                       index={position}
                       nextDestination={compartments[position + 1]?.destination ?? null}
                       isCurrent={position === index}
-                      near={Math.abs(position - index) <= 1}
+                      near={position === index || position === index + 1}
                     />
                   ))}
                 </div>
@@ -192,8 +197,8 @@ export function Train({ reduced, onLeave }: { reduced: boolean; onLeave: () => v
         style={{
           background:
             "radial-gradient(ellipse 9% 26% at 50% 50%, " +
-            "color-mix(in srgb, var(--color-bg) 82%, transparent) 0%, " +
-            "color-mix(in srgb, var(--color-bg) 58%, transparent) 58%, transparent 100%)",
+            "#05070cd1 0%, " +
+            "#05070c94 58%, transparent 100%)",
         }}
       />
       <div
