@@ -137,6 +137,7 @@ const manifest: CompartmentSpec[] = [
       },
     ],
   },
+  projectCar("gitscout", "gitscout"),
   projectCar("WeatherBoard", "weatherboard"),
   projectCar("AvaxGods", "avaxgods"),
   projectCar("Blog Website", "blog-website"),

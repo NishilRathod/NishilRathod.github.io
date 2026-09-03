@@ -4,7 +4,7 @@ import { LazyMotion, domAnimation } from "motion/react";
 import { act } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { compartments } from "../content/compartments";
+import { carCount, compartments, indexOfCar } from "../content/compartments";
 import { Train } from "../train/Train";
 
 /**
@@ -47,6 +47,16 @@ const renderTrain = ({ reduced = false, at = "" } = {}) => {
 
 /** The car the line map says you are in. */
 const currentCar = () => screen.getByRole("button", { current: true }).getAttribute("aria-label");
+
+/**
+ * The label the line map gives a car, built from the manifest rather than
+ * written out. Car numbers come from position, so inserting a compartment
+ * renumbers every car after it and any hand-written "Car 07" goes stale.
+ */
+const carLabel = (id: string) => {
+  const car = compartments[indexOfCar(id)];
+  return `Car ${car.code}, ${car.destination}`;
+};
 
 /**
  * The platform prompt, if it is showing.
@@ -251,12 +261,28 @@ describe("driving", () => {
     expect(currentCar()).toBe(`Car 03, ${compartments[2].destination}`);
   });
 
-  it("ignores a number with no car behind it", () => {
+  // The jump keys span Digit1..Digit9 only, so this guard can be exercised from
+  // the keyboard only while the train is shorter than that.
+  it.skipIf(carCount >= 9)("ignores a number with no car behind it", () => {
     setup();
 
-    fireEvent.keyDown(window, { code: "Digit9" });
+    fireEvent.keyDown(window, { code: `Digit${carCount + 1}` });
     advance(16);
-    expect(currentCar()).toBe(`Car 01, ${compartments[0].destination}`);
+    expect(currentCar()).toBe(carLabel(compartments[0].id));
+  });
+
+  it("reaches the last car with its own digit", () => {
+    // The boarding notice promises that pressing a number jumps straight to
+    // that car. There is no Digit10, so a tenth compartment would quietly make
+    // that promise false for the end of the train. Fail here rather than let
+    // the notice start lying.
+    expect(carCount).toBeLessThanOrEqual(9);
+
+    setup();
+
+    fireEvent.keyDown(window, { code: `Digit${carCount}` });
+    advance(16);
+    expect(currentCar()).toBe(carLabel(compartments[carCount - 1].id));
   });
 
   it("leaves Ctrl+S to the browser", () => {
@@ -336,7 +362,7 @@ describe("boarding", () => {
     advance(16);
 
     expect(boardPrompt()).toHaveLength(0);
-    expect(currentCar()).toBe("Car 07, Tech stack");
+    expect(currentCar()).toBe(carLabel("tech-stack"));
   });
 });
 

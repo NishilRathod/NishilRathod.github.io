@@ -4,6 +4,7 @@ import { act } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import App from "../App";
+import { compartments, indexOfCar } from "../content/compartments";
 import { MIN_TRAIN_WIDTH } from "../lib/train";
 
 /**
@@ -123,9 +124,12 @@ describe("crossing between the views", () => {
     await user.click(screen.getByRole("button", { name: /board the train/i }));
     advance();
 
+    // Built from the manifest: car numbers come from position, so inserting a
+    // compartment renumbers everything after it.
+    const car = compartments[indexOfCar("tech-stack")];
     expect(screen.getByRole("button", { current: true })).toHaveAttribute(
       "aria-label",
-      "Car 07, Tech stack",
+      `Car ${car.code}, ${car.destination}`,
     );
   });
 });

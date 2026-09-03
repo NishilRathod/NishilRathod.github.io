@@ -22,6 +22,20 @@ export type Project = {
  */
 export const projects: Project[] = [
   {
+    name: "gitscout",
+    summary:
+      "A GitHub radar that finds projects worth contributing to, ranked against what you have actually written — and refuses to overstate what it knows.",
+    highlights: [
+      "GitHub no longer exposes star history, so it keeps its own JSON Lines snapshots — and calls a first run's figures an average rather than a measured rate.",
+      "Popularity and contributability are scored apart: one repo showed 195k stars against 23 contributors and one merged PR, and blending them would rank it top.",
+      "Zero dependencies, standard library only, and budget-aware — a contributor count costs one request via the Link rel=\"last\" header instead of paginating.",
+    ],
+    stack: ["Go", "GitHub REST API", "GitHub Actions"],
+    status: "shipped",
+    period: "2026",
+    repoUrl: "https://github.com/NishilRathod/gitscout",
+  },
+  {
     name: "WeatherBoard",
     summary:
       "A full-stack weather dashboard built around a cache that does the hard thinking, so the upstream API doesn't have to.",
