@@ -107,7 +107,28 @@ itself is, and headless mode works:
 ```
 
 `--disable-gpu` must NOT be passed — it kills WebGL and the scene silently
-falls back. Two gotchas when screenshotting below the fold:
+falls back.
+
+**Never use this recipe to judge narrow widths.** Chrome on Windows clamps the
+window to a minimum of about 500px, so `--window-size=390,1200` lays the page
+out at **500px** and then crops the image to 390. Text runs under the crop and
+the result looks exactly like a horizontal overflow that is not there. This
+cost a false bug report on 2026-09-03: the plain-text page was declared broken
+on mobile when it wraps correctly at 390px and at 320px.
+
+Verify it by screenshotting a page that prints its own width:
+
+```
+<div id="o"></div><script>o.textContent = innerWidth</script>
+```
+
+At `--window-size=390,200` it reports 500. For real narrow-width checks use a
+browser with proper device emulation, which overrides the layout viewport
+rather than resizing a window; measure with
+`document.documentElement.scrollWidth > clientWidth` instead of trusting a
+picture.
+
+Two more gotchas when screenshotting below the fold:
 
 - The hero uses `min-h-[90svh]`, so a tall window just stretches it. Screenshot
   at a normal height and scroll instead.
