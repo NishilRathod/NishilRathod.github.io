@@ -144,7 +144,7 @@ export const pullRequests: PullRequest[] = [
 
 /** What those pull requests actually involved. Drawn only from merged work. */
 export const openSourceNotes: string[] = [
-  "Made aisquare-cli run on Windows at all: a module-scope import fcntl killed every command, and fixing it exposed four more defects — including hooks quoted with POSIX shlex that cmd.exe could never run.",
-  "Porting the test suite to Windows CI took it from 35 failing to 658 passing, and surfaced real cross-platform bugs: ~/.aisquare mistaken for a project root, and credential files left readable to every account because chmod 0600 is a no-op on NTFS.",
-  "The first fix for those credentials did not actually close the hole. Strengthening the test so it could no longer pass vacuously is what caught it — the missing piece was an icacls /reset.",
+  "Brought up a Windows CI lane on a suite that had only ever run on Linux, fixing 35 platform-divergence failures across 65 files (PATHEXT resolution, NTFS DACLs vs POSIX mode bits, path separators, clock granularity).",
+  "Replaced NTFS file-permission handling that was silently a no-op — chmod(0600) does nothing on Windows, leaving API keys and bearer tokens world-readable — with a single atomic icacls call that verifies the resulting ACL rather than trusting the exit code.",
+  "Eliminated a class of false-green tests: guards that passed because their premise had quietly stopped holding on the new platform. Each fix shipped with a mutation check proving the test still fails when the behaviour regresses.",
 ];
