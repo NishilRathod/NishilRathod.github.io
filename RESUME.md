@@ -60,8 +60,10 @@ These must not be invented. Record answers here as they arrive.
 - Purpose is a **calling card**, not a recruiter funnel and not a blog.
 - **No writing/blog section** — no posts exist, and an empty one reads worse than none.
 - **Phone number never appears** on the site. A test asserts this against `dist/`.
-- `aisquare-cli` and `pipe` are **occasional contributions**, not owned projects.
-  One quiet line under the work cards. Never presented as his own products.
+- `aisquare-cli` and `pipe` are **contributions**, not owned projects. One quiet
+  line under the work cards, and since 2026-09-29 their own train car listing
+  **merged** PRs only (open ones wait until they land). Never presented as his
+  own products.
 - No skill-percentage bars in the Toolbelt section.
 - Colour palette and font choices are lifted from `harshtomar.com`; exact token
   values are in `PLAN.md`.

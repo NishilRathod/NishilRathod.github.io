@@ -102,3 +102,49 @@ export const contributions: Contribution[] = [
     note: "universal connector framework",
   },
 ];
+
+export type PullRequest = {
+  repo: string;
+  number: number;
+  title: string;
+  href: string;
+  /** Month it landed, e.g. "Sep 2026". */
+  merged: string;
+};
+
+/**
+ * Merged pull requests to AISquare-Studio's repos — the record behind the
+ * contributions above. Merged only: an open PR is a proposal, and listing it
+ * here would claim work the maintainers have not accepted. Add one when it
+ * lands. Newest first.
+ */
+export const pullRequests: PullRequest[] = [
+  {
+    repo: "aisquare-cli",
+    number: 79,
+    title: "Make the test suite hermetic against ambient routing variables",
+    href: "https://github.com/AISquare-Studio/aisquare-cli/pull/79",
+    merged: "Sep 2026",
+  },
+  {
+    repo: "aisquare-cli",
+    number: 65,
+    title: "Green Windows CI — port the suite off POSIX-only assumptions, and two bugs it uncovered",
+    href: "https://github.com/AISquare-Studio/aisquare-cli/pull/65",
+    merged: "Sep 2026",
+  },
+  {
+    repo: "aisquare-cli",
+    number: 48,
+    title: "Run on Windows — five defects, POSIX behaviour unchanged",
+    href: "https://github.com/AISquare-Studio/aisquare-cli/pull/48",
+    merged: "Aug 2026",
+  },
+];
+
+/** What those pull requests actually involved. Drawn only from merged work. */
+export const openSourceNotes: string[] = [
+  "Made aisquare-cli run on Windows at all: a module-scope import fcntl killed every command, and fixing it exposed four more defects — including hooks quoted with POSIX shlex that cmd.exe could never run.",
+  "Porting the test suite to Windows CI took it from 35 failing to 658 passing, and surfaced real cross-platform bugs: ~/.aisquare mistaken for a project root, and credential files left readable to every account because chmod 0600 is a no-op on NTFS.",
+  "The first fix for those credentials did not actually close the hole. Strengthening the test so it could no longer pass vacuously is what caught it — the missing piece was an icacls /reset.",
+];

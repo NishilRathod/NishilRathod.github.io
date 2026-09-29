@@ -1,5 +1,5 @@
 import { journey, type JourneyEntry } from "./journey";
-import { contributions, projects, type Project } from "./projects";
+import { openSourceNotes, projects, pullRequests, type Project, type PullRequest } from "./projects";
 import { skills, type SkillGroup } from "./skills";
 
 /**
@@ -25,6 +25,7 @@ export type Poster =
   | { kind: "project"; wall: Wall; project: Project }
   | { kind: "stack"; wall: Wall; groups: SkillGroup[] }
   | { kind: "contact"; wall: Wall }
+  | { kind: "contributions"; wall: Wall; pullRequests: PullRequest[] }
   | { kind: "notice"; wall: Wall; heading: string; lines: string[] };
 
 export type Compartment = {
@@ -128,13 +129,16 @@ const manifest: CompartmentSpec[] = [
           entry("Building in the open"),
         ],
       },
-      {
-        kind: "notice",
-        wall: "right",
-        heading: "Chips in on open source",
-        // Contributions, not ownership — these are AISquare-Studio's repos.
-        lines: contributions.map((it) => `${it.name} — ${it.note}`),
-      },
+    ],
+  },
+  {
+    // Contributions, not ownership — these are AISquare-Studio's repos.
+    id: "open-source",
+    label: "Open source",
+    destination: "AISquare",
+    posters: [
+      { kind: "contributions", wall: "left", pullRequests },
+      { kind: "notice", wall: "right", heading: "Engineering notes", lines: openSourceNotes },
     ],
   },
   projectCar("gitscout", "gitscout"),

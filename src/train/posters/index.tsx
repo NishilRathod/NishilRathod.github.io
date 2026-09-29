@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 
 import type { Compartment, Poster } from "../../content/compartments";
 import { ContactPoster } from "./ContactPoster";
+import { ContributionsPoster } from "./ContributionsPoster";
 import { NoticePoster } from "./NoticePoster";
 import { ProjectPoster } from "./ProjectPoster";
 import { StackPoster } from "./StackPoster";
@@ -32,6 +33,8 @@ export function renderPoster(poster: Poster, car: Compartment): ReactNode {
       return <StackPoster groups={poster.groups} />;
     case "contact":
       return <ContactPoster />;
+    case "contributions":
+      return <ContributionsPoster pullRequests={poster.pullRequests} />;
     case "notice":
       return <NoticePoster heading={poster.heading} lines={poster.lines} />;
     default: {
@@ -48,5 +51,6 @@ export const POSTER_KINDS = [
   "project",
   "stack",
   "contact",
+  "contributions",
   "notice",
 ] as const satisfies readonly Poster["kind"][];

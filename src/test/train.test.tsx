@@ -261,26 +261,27 @@ describe("driving", () => {
     expect(currentCar()).toBe(`Car 03, ${compartments[2].destination}`);
   });
 
-  // The jump keys span Digit1..Digit9 only, so this guard can be exercised from
-  // the keyboard only while the train is shorter than that.
-  it.skipIf(carCount >= 9)("ignores a number with no car behind it", () => {
+  // The jump keys span Digit1..Digit9 then Digit0, so this guard can be
+  // exercised from the keyboard only while the train is shorter than ten.
+  it.skipIf(carCount >= 10)("ignores a number with no car behind it", () => {
     setup();
 
-    fireEvent.keyDown(window, { code: `Digit${carCount + 1}` });
+    fireEvent.keyDown(window, { code: `Digit${(carCount + 1) % 10}` });
     advance(16);
     expect(currentCar()).toBe(carLabel(compartments[0].id));
   });
 
   it("reaches the last car with its own digit", () => {
     // The boarding notice promises that pressing a number jumps straight to
-    // that car. There is no Digit10, so a tenth compartment would quietly make
-    // that promise false for the end of the train. Fail here rather than let
-    // the notice start lying.
-    expect(carCount).toBeLessThanOrEqual(9);
+    // that car. 0 covers the tenth, as it sits after 9 on the keyboard, but
+    // there is no key for an eleventh — which would quietly make that promise
+    // false for the end of the train. Fail here rather than let the notice
+    // start lying.
+    expect(carCount).toBeLessThanOrEqual(10);
 
     setup();
 
-    fireEvent.keyDown(window, { code: `Digit${carCount}` });
+    fireEvent.keyDown(window, { code: `Digit${carCount % 10}` });
     advance(16);
     expect(currentCar()).toBe(carLabel(compartments[carCount - 1].id));
   });

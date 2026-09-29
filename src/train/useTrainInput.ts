@@ -124,9 +124,10 @@ export function useTrainInput({
         return;
       }
 
-      const digit = /^Digit([1-9])$/.exec(event.code);
+      // Keyboard order, not numeric: 1 through 9, then 0 for the tenth car.
+      const digit = /^Digit([0-9])$/.exec(event.code);
       if (digit) {
-        const target = Number(digit[1]) - 1;
+        const target = digit[1] === "0" ? 9 : Number(digit[1]) - 1;
         if (target < carCount) {
           noteMovement();
           onJump(target);
