@@ -5,22 +5,34 @@ import { Body, Departure, Eyebrow } from "./Plate";
  * Work merged into someone else's repository.
  *
  * Grouped by repo, and the ownership line is stated outright rather than left
- * to be inferred: these are AISquare-Studio's projects, and the poster must not
- * read as though they were his. The pull request numbers are shown because
- * they are the claim's receipt — anyone can open one and check.
+ * to be inferred: these are `owner`'s projects, and the poster must not read as
+ * though they were his. The pull request numbers are shown because they are
+ * the claim's receipt — anyone can open one and check.
  */
-export function ContributionsPoster({ pullRequests }: { pullRequests: PullRequest[] }) {
+export function ContributionsPoster({
+  owner,
+  pullRequests,
+}: {
+  /** Whose repos these are, as GitHub names them, e.g. "AISquare-Studio". */
+  owner: string;
+  pullRequests: PullRequest[];
+}) {
   const repos = [...new Set(pullRequests.map((pr) => pr.repo))];
+  const several = repos.length > 1;
 
   return (
     <div className="flex flex-col gap-[0.85em]">
-      <Eyebrow>AISquare-Studio</Eyebrow>
+      <Eyebrow>{owner}</Eyebrow>
 
       <h2 className="text-[1.35em] leading-[1.1] font-bold uppercase tracking-[0.07em] text-enamel">
         Open source
       </h2>
 
-      <Body>Contributions to AISquare-Studio's repos — their projects, my pull requests.</Body>
+      <Body>
+        Contributions to {owner}'s {several ? "repos" : "repo"} —{" "}
+        {several ? "their projects" : "their project"}, my{" "}
+        {pullRequests.length > 1 ? "pull requests" : "pull request"}.
+      </Body>
 
       {repos.map((repo) => (
         <div key={repo} className="flex flex-col gap-[0.6em]">

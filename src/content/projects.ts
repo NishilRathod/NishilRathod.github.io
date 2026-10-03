@@ -85,10 +85,11 @@ export type Contribution = {
 };
 
 /**
- * Occasional contributions — NOT his projects. These are AISquare-Studio's
- * repos; his own copies are forks. Presented modestly on purpose: anyone can
- * check the commit history in thirty seconds, and overclaiming here would cost
- * more credibility than the mention is worth.
+ * Occasional contributions — NOT his projects. aisquare-cli and pipe are
+ * AISquare-Studio's repos, openrig is mvschwarz's; his own copies are forks.
+ * Presented modestly on purpose: anyone can check the commit history in thirty
+ * seconds, and overclaiming here would cost more credibility than the mention
+ * is worth.
  */
 export const contributions: Contribution[] = [
   {
@@ -100,6 +101,11 @@ export const contributions: Contribution[] = [
     name: "pipe",
     href: "https://github.com/AISquare-Studio/pipe",
     note: "universal connector framework",
+  },
+  {
+    name: "openrig",
+    href: "https://github.com/mvschwarz/openrig",
+    note: "coordination layer for coding agents",
   },
 ];
 
@@ -114,9 +120,9 @@ export type PullRequest = {
 
 /**
  * Merged pull requests to AISquare-Studio's repos — the record behind the
- * contributions above. Merged only: an open PR is a proposal, and listing it
- * here would claim work the maintainers have not accepted. Add one when it
- * lands. Newest first.
+ * AISquare contributions above. Merged only: an open PR is a proposal, and
+ * listing it here would claim work the maintainers have not accepted. Add one
+ * when it lands. Newest first.
  */
 export const pullRequests: PullRequest[] = [
   {
@@ -147,4 +153,25 @@ export const openSourceNotes: string[] = [
   "Brought up a Windows CI lane on a suite that had only ever run on Linux, fixing 35 platform-divergence failures across 65 files (PATHEXT resolution, NTFS DACLs vs POSIX mode bits, path separators, clock granularity).",
   "Replaced NTFS file-permission handling that was silently a no-op — chmod(0600) does nothing on Windows, leaving API keys and bearer tokens world-readable — with a single atomic icacls call that verifies the resulting ACL rather than trusting the exit code.",
   "Eliminated a class of false-green tests: guards that passed because their premise had quietly stopped holding on the new platform. Each fix shipped with a mutation check proving the test still fails when the behaviour regresses.",
+];
+
+/**
+ * Merged pull requests to mvschwarz/openrig — his project, my fixes. Same rule
+ * as above: merged only, newest first.
+ */
+export const openrigPullRequests: PullRequest[] = [
+  {
+    repo: "openrig",
+    number: 515,
+    title: "Keep literal = session names exact in tmux discovery",
+    href: "https://github.com/mvschwarz/openrig/pull/515",
+    merged: "Oct 2026",
+  },
+];
+
+/** What that pull request actually involved. Drawn only from merged work. */
+export const openrigNotes: string[] = [
+  "Fixed tmux discovery for a session literally named \"=lit\": tmux reads a leading = as its exact-match marker, so the scanner reported the plain \"lit\" session's panes under both names — or threw outright when \"lit\" did not exist.",
+  "Kept the fix to the scanner, passing exact-encoded targets (\"==lit\", \"=lit\") by tmux's own target rules, so the adapter and every other caller stayed untouched.",
+  "Taught the test double to resolve targets the way tmux does, so the new cases fail on the old code, and checked before and after against real tmux 3.6 on a private socket.",
 ];

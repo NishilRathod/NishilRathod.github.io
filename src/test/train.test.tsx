@@ -4,7 +4,7 @@ import { LazyMotion, domAnimation } from "motion/react";
 import { act } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { carCount, compartments, indexOfCar } from "../content/compartments";
+import { compartments, indexOfCar } from "../content/compartments";
 import { Train } from "../train/Train";
 
 /**
@@ -176,7 +176,7 @@ describe("the render loop costs nothing while you are parked", () => {
     );
     expect(carsWithARoom).toHaveLength(2);
 
-    // The half that must never be conditional: all eight cars, and the words on
+    // The half that must never be conditional: every car, and the words on
     // the terminus poster while standing at the other end of the train.
     expect(screen.getAllByRole("region")).toHaveLength(compartments.length);
     const terminus = compartments[compartments.length - 1];
@@ -196,7 +196,7 @@ describe("the render loop costs nothing while you are parked", () => {
     const { container } = renderTrain({ reduced: true });
     advance(16);
 
-    fireEvent.keyDown(window, { code: "Digit4" });
+    fireEvent.click(screen.getByRole("button", { name: carLabel(compartments[3].id) }));
     advance(64);
 
     const built = [...container.querySelectorAll("section[aria-label]")]
@@ -239,51 +239,71 @@ describe("driving", () => {
     expect(currentCar()).toBe(`Car 02, ${compartments[1].destination}`);
   });
 
-  it("remembers a number pressed on the platform, across the boarding move", () => {
+  it("remembers a car linked to from the platform, across the boarding move", () => {
     // Full motion, so the scripted 1.6s boarding move actually runs. The jump
     // used to be read at the top of the very first tick and dropped by the
-    // boarding branch a line later, so the one shortcut the opening hint
-    // advertises put you in car 01 and looked like a dead key.
+    // boarding branch a line later, so a link to one car opened before
+    // boarding put you in car 01 and looked like a dead link.
     renderTrain();
     advance(16);
 
-    fireEvent.keyDown(window, { code: "Digit4" });
+    window.history.replaceState(null, "", `#${compartments[3].id}`);
+    act(() => {
+      window.dispatchEvent(new HashChangeEvent("hashchange"));
+    });
     advance(4000);
 
-    expect(currentCar()).toBe(`Car 04, ${compartments[3].destination}`);
+    expect(currentCar()).toBe(carLabel(compartments[3].id));
   });
 
-  it("jumps straight to a car on a number key", () => {
+  it("jumps straight to a car from its point on the line", () => {
+    setup();
+
+    fireEvent.click(screen.getByRole("button", { name: carLabel(compartments[2].id) }));
+    advance(16);
+    expect(currentCar()).toBe(carLabel(compartments[2].id));
+  });
+
+  it("reaches the last car from its point on the line, however long the train is", () => {
+    // Number keys used to do this, and ran out at ten cars: there is no key for
+    // an eleventh. The line has a point for every car, so the end of the train
+    // is always one click away.
+    setup();
+
+    const last = compartments[compartments.length - 1];
+    fireEvent.click(screen.getByRole("button", { name: carLabel(last.id) }));
+    advance(16);
+    expect(currentCar()).toBe(carLabel(last.id));
+  });
+
+  it("names each other stop on the line, for pointing at", () => {
+    // Only the current stop is labelled all the time; every other one carries
+    // a label that hover and keyboard focus reveal, so nobody has to click a
+    // dot to find out where it goes.
+    setup();
+
+    const labels = [
+      ...screen.getByRole("navigation", { name: /cars/i }).querySelectorAll("[data-stop-label]"),
+    ].map((label) => label.textContent);
+
+    expect(labels).toEqual(
+      compartments.slice(1).map((car) => `Car ${car.code} · ${car.destination}`),
+    );
+  });
+
+  it("ignores number keys, which no longer jump", () => {
     setup();
 
     fireEvent.keyDown(window, { code: "Digit3" });
     advance(16);
-    expect(currentCar()).toBe(`Car 03, ${compartments[2].destination}`);
-  });
-
-  // The jump keys span Digit1..Digit9 then Digit0, so this guard can be
-  // exercised from the keyboard only while the train is shorter than ten.
-  it.skipIf(carCount >= 10)("ignores a number with no car behind it", () => {
-    setup();
-
-    fireEvent.keyDown(window, { code: `Digit${(carCount + 1) % 10}` });
-    advance(16);
     expect(currentCar()).toBe(carLabel(compartments[0].id));
   });
 
-  it("reaches the last car with its own digit", () => {
-    // The boarding notice promises that pressing a number jumps straight to
-    // that car. 0 covers the tenth, as it sits after 9 on the keyboard, but
-    // there is no key for an eleventh — which would quietly make that promise
-    // false for the end of the train. Fail here rather than let the notice
-    // start lying.
-    expect(carCount).toBeLessThanOrEqual(10);
-
+  it("tells you to use the line, and promises no number keys", () => {
     setup();
 
-    fireEvent.keyDown(window, { code: `Digit${carCount % 10}` });
-    advance(16);
-    expect(currentCar()).toBe(carLabel(compartments[carCount - 1].id));
+    expect(screen.getByText(/click any point on the line at the bottom of the screen/i)).toBeInTheDocument();
+    expect(screen.queryByText(/press a number/i)).toBeNull();
   });
 
   it("leaves Ctrl+S to the browser", () => {

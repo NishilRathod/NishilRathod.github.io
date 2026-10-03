@@ -147,8 +147,8 @@ function DestinationBoard({
 /**
  * The line diagram, for cars whose right-hand panel carries no poster.
  *
- * Three of the eight have content on one side only, which left half the end
- * wall bare — not as wall, but as a gap where something was missing. This is
+ * Some cars have content on one side only, which left half the end wall bare
+ * — not as wall, but as a gap where something was missing. This is
  * the strip above a metro door: every stop on the line, where you are on it,
  * and how much of the journey is left. It is carriage furniture rather than
  * content, so it is built here from the same list the train is built from and

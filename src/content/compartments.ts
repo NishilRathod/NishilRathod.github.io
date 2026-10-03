@@ -1,5 +1,13 @@
 import { journey, type JourneyEntry } from "./journey";
-import { openSourceNotes, projects, pullRequests, type Project, type PullRequest } from "./projects";
+import {
+  openSourceNotes,
+  openrigNotes,
+  openrigPullRequests,
+  projects,
+  pullRequests,
+  type Project,
+  type PullRequest,
+} from "./projects";
 import { skills, type SkillGroup } from "./skills";
 
 /**
@@ -25,7 +33,7 @@ export type Poster =
   | { kind: "project"; wall: Wall; project: Project }
   | { kind: "stack"; wall: Wall; groups: SkillGroup[] }
   | { kind: "contact"; wall: Wall }
-  | { kind: "contributions"; wall: Wall; pullRequests: PullRequest[] }
+  | { kind: "contributions"; wall: Wall; owner: string; pullRequests: PullRequest[] }
   | { kind: "notice"; wall: Wall; heading: string; lines: string[] };
 
 export type Compartment = {
@@ -94,7 +102,7 @@ const manifest: CompartmentSpec[] = [
         lines: [
           "Hold W or the up arrow to move forward.",
           "Hold S or the down arrow to go back.",
-          "Press a number to jump straight to that car.",
+          "Click any point on the line at the bottom of the screen to skip to that car; hover a point to see which car it is.",
         ],
       },
     ],
@@ -137,8 +145,18 @@ const manifest: CompartmentSpec[] = [
     label: "Open source",
     destination: "AISquare",
     posters: [
-      { kind: "contributions", wall: "left", pullRequests },
+      { kind: "contributions", wall: "left", owner: "AISquare-Studio", pullRequests },
       { kind: "notice", wall: "right", heading: "Engineering notes", lines: openSourceNotes },
+    ],
+  },
+  {
+    // Contributions, not ownership — OpenRig is mvschwarz's project.
+    id: "openrig",
+    label: "Open source",
+    destination: "OpenRig",
+    posters: [
+      { kind: "contributions", wall: "left", owner: "mvschwarz", pullRequests: openrigPullRequests },
+      { kind: "notice", wall: "right", heading: "Engineering notes", lines: openrigNotes },
     ],
   },
   projectCar("gitscout", "gitscout"),

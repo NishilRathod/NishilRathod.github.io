@@ -64,6 +64,14 @@ These must not be invented. Record answers here as they arrive.
   line under the work cards, and since 2026-09-29 their own train car listing
   **merged** PRs only (open ones wait until they land). Never presented as his
   own products.
+- `openrig` (mvschwarz's project) gets the same treatment: in that line, and
+  since 2026-10-03 its own car right after the AISquare one, listing merged PRs
+  only (#515 so far). Each contributions car names the repo owner on its poster.
+- **No number-key jumps** since 2026-10-03, when the train passed ten cars and
+  ran out of digit keys. Jumping is the line map's job: every stop on the rail at
+  the bottom is a button, and hover or keyboard focus shows "Car NN · Name". The
+  boarding car's "How to travel" notice says so. The train is no longer capped
+  at ten cars.
 - No skill-percentage bars in the Toolbelt section.
 - Colour palette and font choices are lifted from `harshtomar.com`; exact token
   values are in `PLAN.md`.
@@ -85,6 +93,7 @@ These must not be invented. Record answers here as they arrive.
 
 - `aisquare-cli` and `pipe` on his account are **forks** of `AISquare-Studio`
   repos, not repos he owns. Confirmed with him directly — hence the framing above.
+  `openrig` on his account is likewise a fork of `mvschwarz/openrig`.
 - Reference site is Next.js + Turbopack; we are deliberately not matching that
   stack. Vite is lighter and matches what he already runs.
 

@@ -115,24 +115,14 @@ export function useTrainInput({
       // single-letter binding that swallows chords is a broken browser.
       if (event.ctrlKey || event.metaKey || event.altKey || isTyping()) return;
 
+      // No number-key jumps: there are more cars than digit keys, so jumping is
+      // the line map's job — every car is a point on it you can click.
       const direction = directionFor(event.code);
       if (direction) {
         // Held keys repeat; the intent is already set and re-pressing under
         // reduced motion would run the whole train past at the repeat rate.
         if (!event.repeat) press(direction);
         event.preventDefault();
-        return;
-      }
-
-      // Keyboard order, not numeric: 1 through 9, then 0 for the tenth car.
-      const digit = /^Digit([0-9])$/.exec(event.code);
-      if (digit) {
-        const target = digit[1] === "0" ? 9 : Number(digit[1]) - 1;
-        if (target < carCount) {
-          noteMovement();
-          onJump(target);
-          event.preventDefault();
-        }
       }
     };
 
@@ -207,18 +197,7 @@ export function useTrainInput({
       stage?.removeEventListener("pointercancel", onPointerUp);
       intentRef.current = 0;
     };
-  }, [
-    enabled,
-    carCount,
-    stageRef,
-    intentRef,
-    impulseRef,
-    onJump,
-    press,
-    release,
-    noteMovement,
-    wake,
-  ]);
+  }, [enabled, stageRef, intentRef, impulseRef, press, release, noteMovement, wake]);
 
   return { press, release };
 }

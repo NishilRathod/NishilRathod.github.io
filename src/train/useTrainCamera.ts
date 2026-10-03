@@ -164,11 +164,10 @@ export function useTrainCamera({
       }
 
       // Read only once there is somewhere for it to go. Taking it at the top of
-      // the tick meant a jump requested from the platform — pressing 3 on the
-      // opening screen, which is exactly what the hint invites — was cleared on
-      // the first frame and then thrown away by the boarding move that ran for
-      // the next 1.6 seconds, landing you in car 01 with no sign anything had
-      // happened.
+      // the tick meant a jump requested from the platform — a link straight to
+      // one car's hash, opened before boarding — was cleared on the first frame
+      // and then thrown away by the boarding move that ran for the next 1.6
+      // seconds, landing you in car 01 with no sign anything had happened.
       const jump = pendingJumpRef.current;
       pendingJumpRef.current = null;
 

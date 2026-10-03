@@ -9,9 +9,11 @@ import { profile } from "../content/profile";
  * the effect twice. Everything here is hairlines and small tracked mono, sized
  * so it reads as instrumentation rather than as chrome.
  *
- * The line map is the navigation: eight stops on a rail, the way the strip
+ * The line map is the navigation: one stop on a rail per car, the way the strip
  * above a metro door tells you where you are on the line. It is genuinely a
- * sequence, so numbering it is honest rather than decorative.
+ * sequence, so numbering it is honest rather than decorative. It is also the
+ * only way to jump: there are more cars than number keys, and every stop is a
+ * button that says which car it is when you point at it.
  */
 
 /**
@@ -130,13 +132,31 @@ export function HUD({
                               : "size-1.5 bg-enamel/20 group-hover:bg-lamp"
                         }`}
                       />
-                      {/* Only the current stop is labelled. Eight labels on a rail
-                          this narrow would collide, and hover covers the rest. */}
+                      {/* Only the current stop is labelled all the time. A label
+                          per stop on a rail this narrow would collide, so the
+                          rest name themselves on hover or keyboard focus —
+                          above the rail, clear of the current stop's label
+                          below it. The ends are pinned to their edge so the
+                          first and last labels do not hang off the rail. */}
                       {current ? (
                         <span className="absolute top-8 whitespace-nowrap text-[0.58rem] uppercase tracking-[0.22em] text-lamp/70">
                           {stop.destination}
                         </span>
-                      ) : null}
+                      ) : (
+                        <span
+                          aria-hidden="true"
+                          data-stop-label
+                          className={`pointer-events-none absolute bottom-7 whitespace-nowrap text-[0.58rem] uppercase tracking-[0.22em] text-enamel/75 opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100 ${
+                            position === 0
+                              ? "left-0"
+                              : position === cars.length - 1
+                                ? "right-0"
+                                : "left-1/2 -translate-x-1/2"
+                          }`}
+                        >
+                          Car {stop.code} &#183; {stop.destination}
+                        </span>
+                      )}
                     </button>
 
                     {position < cars.length - 1 ? (
