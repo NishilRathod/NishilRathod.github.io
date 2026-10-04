@@ -86,7 +86,8 @@ export type Contribution = {
 
 /**
  * Occasional contributions — NOT his projects. aisquare-cli and pipe are
- * AISquare-Studio's repos, openrig is mvschwarz's; his own copies are forks.
+ * AISquare-Studio's repos, openrig is mvschwarz's and corsair is corsairdev's;
+ * his own copies are forks.
  * Presented modestly on purpose: anyone can check the commit history in thirty
  * seconds, and overclaiming here would cost more credibility than the mention
  * is worth.
@@ -107,9 +108,16 @@ export const contributions: Contribution[] = [
     href: "https://github.com/mvschwarz/openrig",
     note: "coordination layer for coding agents",
   },
+  {
+    name: "corsair",
+    href: "https://github.com/corsairdev/corsair",
+    note: "integration layer for AI agents",
+  },
 ];
 
 export type PullRequest = {
+  /** Who owns the repo, as GitHub names them, e.g. "AISquare-Studio". */
+  owner: string;
   repo: string;
   number: number;
   title: string;
@@ -126,6 +134,7 @@ export type PullRequest = {
  */
 export const pullRequests: PullRequest[] = [
   {
+    owner: "AISquare-Studio",
     repo: "aisquare-cli",
     number: 79,
     title: "Make the test suite hermetic against ambient routing variables",
@@ -133,6 +142,7 @@ export const pullRequests: PullRequest[] = [
     merged: "Sep 2026",
   },
   {
+    owner: "AISquare-Studio",
     repo: "aisquare-cli",
     number: 65,
     title: "Green Windows CI — port the suite off POSIX-only assumptions, and two bugs it uncovered",
@@ -140,6 +150,7 @@ export const pullRequests: PullRequest[] = [
     merged: "Sep 2026",
   },
   {
+    owner: "AISquare-Studio",
     repo: "aisquare-cli",
     number: 48,
     title: "Run on Windows — five defects, POSIX behaviour unchanged",
@@ -156,11 +167,20 @@ export const openSourceNotes: string[] = [
 ];
 
 /**
- * Merged pull requests to mvschwarz/openrig — his project, my fixes. Same rule
- * as above: merged only, newest first.
+ * Merged pull requests to other people's repos, outside AISquare — their
+ * projects, my fixes. Same rule as above: merged only, newest first.
  */
-export const openrigPullRequests: PullRequest[] = [
+export const moreOpenSourcePullRequests: PullRequest[] = [
   {
+    owner: "corsairdev",
+    repo: "corsair",
+    number: 1825,
+    title: "Remove the Zendesk plugin's generator example webhook",
+    href: "https://github.com/corsairdev/corsair/pull/1825",
+    merged: "Oct 2026",
+  },
+  {
+    owner: "mvschwarz",
     repo: "openrig",
     number: 515,
     title: "Keep literal = session names exact in tmux discovery",
@@ -169,9 +189,10 @@ export const openrigPullRequests: PullRequest[] = [
   },
 ];
 
-/** What that pull request actually involved. Drawn only from merged work. */
-export const openrigNotes: string[] = [
-  "Fixed tmux discovery for a session literally named \"=lit\": tmux reads a leading = as its exact-match marker, so the scanner reported the plain \"lit\" session's panes under both names — or threw outright when \"lit\" did not exist.",
-  "Kept the fix to the scanner, passing exact-encoded targets (\"==lit\", \"=lit\") by tmux's own target rules, so the adapter and every other caller stayed untouched.",
-  "Taught the test double to resolve targets the way tmux does, so the new cases fail on the old code, and checked before and after against real tmux 3.6 on a private socket.",
+/** What those pull requests actually involved. Drawn only from merged work. */
+export const moreOpenSourceNotes: string[] = [
+  "OpenRig — tmux treats a leading = as its exact-match marker, so discovery misfiled a session named \"=lit\" or threw. The scanner now passes exact targets (\"==lit\").",
+  "OpenRig — the test double resolves targets the way tmux does, so the new cases fail on the old code; checked before and after on real tmux 3.6.",
+  "Corsair — removed the Zendesk plugin's generator stub webhook, which only matched a \"type: example\" payload Zendesk never sends; kept its signature verification and tests.",
+  "Corsair — lint, typecheck and all 354 build tasks passed; the test failures were all in untouched plugins, mostly needing credentials or Postgres, and the PR listed them.",
 ];

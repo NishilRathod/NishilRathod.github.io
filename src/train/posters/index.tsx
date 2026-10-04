@@ -34,7 +34,7 @@ export function renderPoster(poster: Poster, car: Compartment): ReactNode {
     case "contact":
       return <ContactPoster />;
     case "contributions":
-      return <ContributionsPoster owner={poster.owner} pullRequests={poster.pullRequests} />;
+      return <ContributionsPoster pullRequests={poster.pullRequests} />;
     case "notice":
       return <NoticePoster heading={poster.heading} lines={poster.lines} />;
     default: {

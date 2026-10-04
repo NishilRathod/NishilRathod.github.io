@@ -1,8 +1,8 @@
 import { journey, type JourneyEntry } from "./journey";
 import {
   openSourceNotes,
-  openrigNotes,
-  openrigPullRequests,
+  moreOpenSourceNotes,
+  moreOpenSourcePullRequests,
   projects,
   pullRequests,
   type Project,
@@ -33,7 +33,7 @@ export type Poster =
   | { kind: "project"; wall: Wall; project: Project }
   | { kind: "stack"; wall: Wall; groups: SkillGroup[] }
   | { kind: "contact"; wall: Wall }
-  | { kind: "contributions"; wall: Wall; owner: string; pullRequests: PullRequest[] }
+  | { kind: "contributions"; wall: Wall; pullRequests: PullRequest[] }
   | { kind: "notice"; wall: Wall; heading: string; lines: string[] };
 
 export type Compartment = {
@@ -145,18 +145,19 @@ const manifest: CompartmentSpec[] = [
     label: "Open source",
     destination: "AISquare",
     posters: [
-      { kind: "contributions", wall: "left", owner: "AISquare-Studio", pullRequests },
+      { kind: "contributions", wall: "left", pullRequests },
       { kind: "notice", wall: "right", heading: "Engineering notes", lines: openSourceNotes },
     ],
   },
   {
-    // Contributions, not ownership — OpenRig is mvschwarz's project.
-    id: "openrig",
+    // Contributions, not ownership — other people's projects (OpenRig is
+    // mvschwarz's, Corsair is corsairdev's); the poster names each owner.
+    id: "more-open-source",
     label: "Open source",
-    destination: "OpenRig",
+    destination: "More open source",
     posters: [
-      { kind: "contributions", wall: "left", owner: "mvschwarz", pullRequests: openrigPullRequests },
-      { kind: "notice", wall: "right", heading: "Engineering notes", lines: openrigNotes },
+      { kind: "contributions", wall: "left", pullRequests: moreOpenSourcePullRequests },
+      { kind: "notice", wall: "right", heading: "Engineering notes", lines: moreOpenSourceNotes },
     ],
   },
   projectCar("gitscout", "gitscout"),

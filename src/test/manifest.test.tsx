@@ -86,6 +86,30 @@ describe("what the cars carry", () => {
     }
   });
 
+  it("lists every merged pull request with its receipt and its owner", () => {
+    // Contributions are someone else's projects. Each one has to link to the
+    // pull request itself, and say whose repo it went into — on a car holding
+    // more than one owner, per repo, so no project borrows another's line.
+    renderManifest();
+
+    const links = screen.getAllByRole("link");
+
+    for (const { pullRequests } of postersOfKind("contributions")) {
+      const owners = new Set(pullRequests.map((pr) => pr.owner));
+
+      for (const pr of pullRequests) {
+        expect(links.some((link) => link.getAttribute("href") === pr.href)).toBe(true);
+        expect(screen.getAllByText(new RegExp(pr.owner)).length).toBeGreaterThan(0);
+
+        if (owners.size > 1) {
+          expect(
+            screen.getByRole("heading", { name: `${pr.owner}/${pr.repo}`, level: 3 }),
+          ).toBeInTheDocument();
+        }
+      }
+    }
+  });
+
   it("renders every dated entry declared on a timeline poster", () => {
     renderManifest();
 

@@ -64,9 +64,12 @@ These must not be invented. Record answers here as they arrive.
   line under the work cards, and since 2026-09-29 their own train car listing
   **merged** PRs only (open ones wait until they land). Never presented as his
   own products.
-- `openrig` (mvschwarz's project) gets the same treatment: in that line, and
-  since 2026-10-03 its own car right after the AISquare one, listing merged PRs
-  only (#515 so far). Each contributions car names the repo owner on its poster.
+- Contributions outside AISquare get the same treatment: in that line, and in
+  car 05, **"More open source"** (`#more-open-source`, since 2026-10-04; it was
+  `#openrig` for a day), right after the AISquare car. Merged PRs only: OpenRig
+  #515 (mvschwarz) and Corsair #1825 (corsairdev) so far; LanceDB docs #371
+  goes on only if it merges. Each PR records its repo owner, and a car holding
+  more than one owner shows every repo as `owner/repo`.
 - **No number-key jumps** since 2026-10-03, when the train passed ten cars and
   ran out of digit keys. Jumping is the line map's job: every stop on the rail at
   the bottom is a button, and hover or keyboard focus shows "Car NN · Name". The
@@ -93,7 +96,8 @@ These must not be invented. Record answers here as they arrive.
 
 - `aisquare-cli` and `pipe` on his account are **forks** of `AISquare-Studio`
   repos, not repos he owns. Confirmed with him directly — hence the framing above.
-  `openrig` on his account is likewise a fork of `mvschwarz/openrig`.
+  `openrig` and `corsair` on his account are likewise forks of
+  `mvschwarz/openrig` and `corsairdev/corsair`.
 - Reference site is Next.js + Turbopack; we are deliberately not matching that
   stack. Vite is lighter and matches what he already runs.
 
