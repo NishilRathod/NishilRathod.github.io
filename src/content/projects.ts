@@ -86,8 +86,9 @@ export type Contribution = {
 
 /**
  * Occasional contributions — NOT his projects. aisquare-cli and pipe are
- * AISquare-Studio's repos, openrig is mvschwarz's and corsair is corsairdev's;
- * his own copies are forks.
+ * AISquare-Studio's repos, openrig is mvschwarz's, corsair is corsairdev's,
+ * headroom is headroomlabs-ai's and spec-kit is GitHub's; his own copies are
+ * forks.
  * Presented modestly on purpose: anyone can check the commit history in thirty
  * seconds, and overclaiming here would cost more credibility than the mention
  * is worth.
@@ -112,6 +113,16 @@ export const contributions: Contribution[] = [
     name: "corsair",
     href: "https://github.com/corsairdev/corsair",
     note: "integration layer for AI agents",
+  },
+  {
+    name: "headroom",
+    href: "https://github.com/headroomlabs-ai/headroom",
+    note: "context compression for coding agents",
+  },
+  {
+    name: "spec-kit",
+    href: "https://github.com/github/spec-kit",
+    note: "spec-driven development toolkit",
   },
 ];
 
@@ -195,4 +206,36 @@ export const moreOpenSourceNotes: string[] = [
   "OpenRig — the test double resolves targets the way tmux does, so the new cases fail on the old code; checked before and after on real tmux 3.6.",
   "Corsair — removed the Zendesk plugin's generator stub webhook, which only matched a \"type: example\" payload Zendesk never sends; kept its signature verification and tests.",
   "Corsair — lint, typecheck and all 354 build tasks passed; the test failures were all in untouched plugins, mostly needing credentials or Postgres, and the PR listed them.",
+];
+
+/**
+ * The next car's worth of merged pull requests to other people's repos, kept
+ * apart from the list above because one plate holds only so much. Same rule:
+ * merged only, newest first.
+ */
+export const openSourceContinuedPullRequests: PullRequest[] = [
+  {
+    owner: "headroomlabs-ai",
+    repo: "headroom",
+    number: 4012,
+    title: "Keep an explicitly empty dashboard allowlist on Windows PowerShell 5.1",
+    href: "https://github.com/headroomlabs-ai/headroom/pull/4012",
+    merged: "Oct 2026",
+  },
+  {
+    owner: "github",
+    repo: "spec-kit",
+    number: 4877,
+    title: "Keep non-ASCII text readable in workflow run artifacts",
+    href: "https://github.com/github/spec-kit/pull/4877",
+    merged: "Oct 2026",
+  },
+];
+
+/** What those pull requests actually involved. Drawn only from merged work. */
+export const openSourceContinuedNotes: string[] = [
+  "Headroom — on Windows PowerShell 5.1 an empty variable drops out of Test-Path Env: once Env: is listed, so an explicit opt-out was overridden by a trusted Docker gateway.",
+  "Headroom — CI only ran PowerShell 7, so the new test runs the installer's functions under 5.1 and 7; on 5.1 it fails without the fix.",
+  "Spec Kit — workflow run records (state, inputs, log, definition snapshot) escaped every non-ASCII character as \\uXXXX; they are now written as authored.",
+  "Spec Kit — a lone surrogate from an undecodable CLI byte still saves as its JSON escape and loads back unchanged, with a test that pins it.",
 ];

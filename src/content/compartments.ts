@@ -3,6 +3,8 @@ import {
   openSourceNotes,
   moreOpenSourceNotes,
   moreOpenSourcePullRequests,
+  openSourceContinuedNotes,
+  openSourceContinuedPullRequests,
   projects,
   pullRequests,
   type Project,
@@ -158,6 +160,17 @@ const manifest: CompartmentSpec[] = [
     posters: [
       { kind: "contributions", wall: "left", pullRequests: moreOpenSourcePullRequests },
       { kind: "notice", wall: "right", heading: "Engineering notes", lines: moreOpenSourceNotes },
+    ],
+  },
+  {
+    // Contributions, not ownership — headroom is headroomlabs-ai's, spec-kit is
+    // GitHub's. A car of its own because car 05's plates were already full.
+    id: "open-source-continued",
+    label: "Open source",
+    destination: "Open source, continued",
+    posters: [
+      { kind: "contributions", wall: "left", pullRequests: openSourceContinuedPullRequests },
+      { kind: "notice", wall: "right", heading: "Engineering notes", lines: openSourceContinuedNotes },
     ],
   },
   projectCar("gitscout", "gitscout"),

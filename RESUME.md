@@ -66,10 +66,14 @@ These must not be invented. Record answers here as they arrive.
   own products.
 - Contributions outside AISquare get the same treatment: in that line, and in
   car 05, **"More open source"** (`#more-open-source`, since 2026-10-04; it was
-  `#openrig` for a day), right after the AISquare car. Merged PRs only: OpenRig
-  #515 (mvschwarz) and Corsair #1825 (corsairdev) so far; LanceDB docs #371
-  goes on only if it merges. Each PR records its repo owner, and a car holding
-  more than one owner shows every repo as `owner/repo`.
+  `#openrig` for a day), right after the AISquare car, holding OpenRig #515
+  (mvschwarz) and Corsair #1825 (corsairdev). Its notes plate is full (5px to
+  spare at 1440px), so since 2026-10-10 the next merges ride in car 06,
+  **"Open source, continued"** (`#open-source-continued`): headroom #4012
+  (headroomlabs-ai) and spec-kit #4877 (github). Every car after it moved down
+  one. Merged PRs only — LanceDB docs #371 and obscura #848 go on only if they
+  merge. Each PR records its repo owner, and a car holding more than one owner
+  shows every repo as `owner/repo`.
 - **No number-key jumps** since 2026-10-03, when the train passed ten cars and
   ran out of digit keys. Jumping is the line map's job: every stop on the rail at
   the bottom is a button, and hover or keyboard focus shows "Car NN · Name". The
@@ -152,6 +156,12 @@ Two more gotchas when screenshotting below the fold:
   `public/` that iframes `/` and injects a style forcing
   `opacity:1 !important` works. **Delete it afterwards — anything in `public/`
   ships.**
+
+Poster plates clip silently (`.poster-slot` is `overflow-hidden`), and jsdom
+cannot see it. To check a car fits, load it at 1400px+ wide (narrower gets the
+plain page) and compare each slot's `clientHeight` with its first child's
+`scrollHeight`. On 2026-10-10 car 05's notes plate had 5px to spare and car 06's
+had 38px.
 
 ## Known compromises
 
