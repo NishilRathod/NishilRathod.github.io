@@ -70,9 +70,12 @@ These must not be invented. Record answers here as they arrive.
   (mvschwarz) and Corsair #1825 (corsairdev). Its notes plate is full (5px to
   spare at 1440px), so since 2026-10-10 the next merges ride in car 06,
   **"Open source, continued"** (`#open-source-continued`): headroom #4012
-  (headroomlabs-ai) and spec-kit #4877 (github). Every car after it moved down
-  one. Merged PRs only — LanceDB docs #371 and obscura #848 go on only if they
-  merge. Each PR records its repo owner, and a car holding more than one owner
+  (headroomlabs-ai) and spec-kit #4877 (github). Its notes plate is full too
+  (38px to spare; six notes overflowed by 200px), so since 2026-10-15 car 07,
+  **"Even more open source"** (`#even-more-open-source`), holds Windows-MCP
+  #459 (CursorTouch). Every car after each new one moved down one. Merged PRs
+  only — LanceDB docs #371, obscura #848 and ai-job-search #564 go on only if
+  they merge. Each PR records its repo owner, and a car holding more than one owner
   shows every repo as `owner/repo`.
 - **No number-key jumps** since 2026-10-03, when the train passed ten cars and
   ran out of digit keys. Jumping is the line map's job: every stop on the rail at

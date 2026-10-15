@@ -5,6 +5,8 @@ import {
   moreOpenSourcePullRequests,
   openSourceContinuedNotes,
   openSourceContinuedPullRequests,
+  evenMoreOpenSourceNotes,
+  evenMoreOpenSourcePullRequests,
   projects,
   pullRequests,
   type Project,
@@ -171,6 +173,17 @@ const manifest: CompartmentSpec[] = [
     posters: [
       { kind: "contributions", wall: "left", pullRequests: openSourceContinuedPullRequests },
       { kind: "notice", wall: "right", heading: "Engineering notes", lines: openSourceContinuedNotes },
+    ],
+  },
+  {
+    // Contributions, not ownership — Windows-MCP is CursorTouch's. A car of its
+    // own because car 06's notes plate was already full.
+    id: "even-more-open-source",
+    label: "Open source",
+    destination: "Even more open source",
+    posters: [
+      { kind: "contributions", wall: "left", pullRequests: evenMoreOpenSourcePullRequests },
+      { kind: "notice", wall: "right", heading: "Engineering notes", lines: evenMoreOpenSourceNotes },
     ],
   },
   projectCar("gitscout", "gitscout"),

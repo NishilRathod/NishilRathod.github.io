@@ -87,8 +87,8 @@ export type Contribution = {
 /**
  * Occasional contributions — NOT his projects. aisquare-cli and pipe are
  * AISquare-Studio's repos, openrig is mvschwarz's, corsair is corsairdev's,
- * headroom is headroomlabs-ai's and spec-kit is GitHub's; his own copies are
- * forks.
+ * headroom is headroomlabs-ai's, spec-kit is GitHub's and Windows-MCP is
+ * CursorTouch's; his own copies are forks.
  * Presented modestly on purpose: anyone can check the commit history in thirty
  * seconds, and overclaiming here would cost more credibility than the mention
  * is worth.
@@ -123,6 +123,11 @@ export const contributions: Contribution[] = [
     name: "spec-kit",
     href: "https://github.com/github/spec-kit",
     note: "spec-driven development toolkit",
+  },
+  {
+    name: "Windows-MCP",
+    href: "https://github.com/CursorTouch/Windows-MCP",
+    note: "MCP server for Windows desktop automation",
   },
 ];
 
@@ -238,4 +243,25 @@ export const openSourceContinuedNotes: string[] = [
   "Headroom — CI only ran PowerShell 7, so the new test runs the installer's functions under 5.1 and 7; on 5.1 it fails without the fix.",
   "Spec Kit — workflow run records (state, inputs, log, definition snapshot) escaped every non-ASCII character as \\uXXXX; they are now written as authored.",
   "Spec Kit — a lone surrogate from an undecodable CLI byte still saves as its JSON escape and loads back unchanged, with a test that pins it.",
+];
+
+/**
+ * The third car's worth, for the same reason: car 06's notes plate is full.
+ * Same rule: merged only, newest first.
+ */
+export const evenMoreOpenSourcePullRequests: PullRequest[] = [
+  {
+    owner: "CursorTouch",
+    repo: "Windows-MCP",
+    number: 459,
+    title: "Resolve the PowerShell executable against the child's PATH",
+    href: "https://github.com/CursorTouch/Windows-MCP/pull/459",
+    merged: "Oct 2026",
+  },
+];
+
+/** What that pull request actually involved. Drawn only from merged work. */
+export const evenMoreOpenSourceNotes: string[] = [
+  "Windows-MCP — Windows finds a bare \"powershell\" on the server's PATH, not the child's, so a host that stripped it broke every PowerShell, Registry and notification call with WinError 2.",
+  "Windows-MCP — reproduced through the real server over stdio with a stripped PATH: WinError 2 on main, the hostname with the fix. A failed launch now names the shell it tried.",
 ];
