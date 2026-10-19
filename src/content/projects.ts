@@ -87,8 +87,8 @@ export type Contribution = {
 /**
  * Occasional contributions — NOT his projects. aisquare-cli and pipe are
  * AISquare-Studio's repos, openrig is mvschwarz's, corsair is corsairdev's,
- * headroom is headroomlabs-ai's, spec-kit is GitHub's and Windows-MCP is
- * CursorTouch's; his own copies are forks.
+ * headroom is headroomlabs-ai's, spec-kit is GitHub's, Windows-MCP is
+ * CursorTouch's and ai-job-search is MadsLorentzen's; his own copies are forks.
  * Presented modestly on purpose: anyone can check the commit history in thirty
  * seconds, and overclaiming here would cost more credibility than the mention
  * is worth.
@@ -128,6 +128,11 @@ export const contributions: Contribution[] = [
     name: "Windows-MCP",
     href: "https://github.com/CursorTouch/Windows-MCP",
     note: "MCP server for Windows desktop automation",
+  },
+  {
+    name: "ai-job-search",
+    href: "https://github.com/MadsLorentzen/ai-job-search",
+    note: "job search framework built on Claude Code",
   },
 ];
 
@@ -251,6 +256,14 @@ export const openSourceContinuedNotes: string[] = [
  */
 export const evenMoreOpenSourcePullRequests: PullRequest[] = [
   {
+    owner: "MadsLorentzen",
+    repo: "ai-job-search",
+    number: 564,
+    title: "Retry postings that could not be fetched instead of expiring them",
+    href: "https://github.com/MadsLorentzen/ai-job-search/pull/564",
+    merged: "Oct 2026",
+  },
+  {
     owner: "CursorTouch",
     repo: "Windows-MCP",
     number: 459,
@@ -260,8 +273,10 @@ export const evenMoreOpenSourcePullRequests: PullRequest[] = [
   },
 ];
 
-/** What that pull request actually involved. Drawn only from merged work. */
+/** What those pull requests actually involved. Drawn only from merged work. */
 export const evenMoreOpenSourceNotes: string[] = [
+  "ai-job-search — a 403 and a closed posting were both \"expired\", never retried; a failed fetch is now retried, giving up after 3 attempts over 48 hours.",
+  "ai-job-search — shaped with the maintainer on the issue first; a test pins the command spec to the tool's status set.",
   "Windows-MCP — Windows finds a bare \"powershell\" on the server's PATH, not the child's, so a host that stripped it broke every PowerShell, Registry and notification call with WinError 2.",
   "Windows-MCP — reproduced through the real server over stdio with a stripped PATH: WinError 2 on main, the hostname with the fix. A failed launch now names the shell it tried.",
 ];

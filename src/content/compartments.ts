@@ -176,8 +176,9 @@ const manifest: CompartmentSpec[] = [
     ],
   },
   {
-    // Contributions, not ownership — Windows-MCP is CursorTouch's. A car of its
-    // own because car 06's notes plate was already full.
+    // Contributions, not ownership — Windows-MCP is CursorTouch's, ai-job-search
+    // is MadsLorentzen's. A car of its own because car 06's notes plate was
+    // already full.
     id: "even-more-open-source",
     label: "Open source",
     destination: "Even more open source",

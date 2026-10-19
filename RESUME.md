@@ -73,9 +73,11 @@ These must not be invented. Record answers here as they arrive.
   (headroomlabs-ai) and spec-kit #4877 (github). Its notes plate is full too
   (38px to spare; six notes overflowed by 200px), so since 2026-10-15 car 07,
   **"Even more open source"** (`#even-more-open-source`), holds Windows-MCP
-  #459 (CursorTouch). Every car after each new one moved down one. Merged PRs
-  only — LanceDB docs #371, obscura #848 and ai-job-search #564 go on only if
-  they merge. Each PR records its repo owner, and a car holding more than one owner
+  #459 (CursorTouch) and, since 2026-10-19, ai-job-search #564
+  (MadsLorentzen). Car 07's notes plate is now full as well (5px to spare after
+  trimming the #564 notes; their first wording overflowed by 28px), so the next
+  merge needs car 08. Every car after each new one moved down one. Merged PRs
+  only — LanceDB docs #371 and obscura #848 go on only if they merge. Each PR records its repo owner, and a car holding more than one owner
   shows every repo as `owner/repo`.
 - **No number-key jumps** since 2026-10-03, when the train passed ten cars and
   ran out of digit keys. Jumping is the line map's job: every stop on the rail at
