@@ -51,7 +51,7 @@ export function ContributionsPoster({ pullRequests }: { pullRequests: PullReques
                       #{pr.number}
                     </span>
                     <span className="font-mono text-[0.56em] uppercase tracking-[0.2em] text-live">
-                      Merged · {pr.merged}
+                      {pr.landedVia ? `Landed via #${pr.landedVia}` : "Merged"} · {pr.merged}
                     </span>
                   </div>
                   <p className="text-[0.8em] leading-[1.5] text-enamel/80">{pr.title}</p>

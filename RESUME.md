@@ -63,7 +63,13 @@ These must not be invented. Record answers here as they arrive.
 - `aisquare-cli` and `pipe` are **contributions**, not owned projects. One quiet
   line under the work cards, and since 2026-09-29 their own train car listing
   **merged** PRs only (open ones wait until they land). Never presented as his
-  own products.
+  own products. Since 2026-10-29 that car also holds pipe #25, whose change
+  landed inside the 0.3.0 release squash (#42) rather than by its own merge, so
+  GitHub shows it Closed; it reads **"Landed via #42"** (`landedVia`), never
+  "Merged". pipe #26 is **not** listed: it was closed in favour of the
+  maintainers' own Google Drive connector (#39). The car's notes plate is full
+  (25px to spare at 1440px; a note for #25 overflowed by 127px), so #25 has no
+  note of its own.
 - Contributions outside AISquare get the same treatment: in that line, and in
   car 05, **"More open source"** (`#more-open-source`, since 2026-10-04; it was
   `#openrig` for a day), right after the AISquare car, holding OpenRig #515
@@ -75,10 +81,14 @@ These must not be invented. Record answers here as they arrive.
   **"Even more open source"** (`#even-more-open-source`), holds Windows-MCP
   #459 (CursorTouch) and, since 2026-10-19, ai-job-search #564
   (MadsLorentzen). Car 07's notes plate is now full as well (5px to spare after
-  trimming the #564 notes; their first wording overflowed by 28px), so the next
-  merge needs car 08. Every car after each new one moved down one. Merged PRs
-  only — LanceDB docs #371 and obscura #848 go on only if they merge. Each PR records its repo owner, and a car holding more than one owner
-  shows every repo as `owner/repo`.
+  trimming the #564 notes; their first wording overflowed by 28px), so since
+  2026-10-29 car 08, **"Still more open source"** (`#still-more-open-source`),
+  holds LanceDB #4507 (lancedb), with 210px to spare on its notes plate. Every
+  car after each new one moved down one. Merged PRs only — obscura #848 goes on
+  only if it merges. LanceDB docs #371 never merged: the docs moved into
+  lancedb/lancedb, and the same guide merged there as #4507. Each PR records its
+  repo owner, and a car holding more than one owner shows every repo as
+  `owner/repo`.
 - **No number-key jumps** since 2026-10-03, when the train passed ten cars and
   ran out of digit keys. Jumping is the line map's job: every stop on the rail at
   the bottom is a button, and hover or keyboard focus shows "Car NN · Name". The
@@ -106,7 +116,8 @@ These must not be invented. Record answers here as they arrive.
 - `aisquare-cli` and `pipe` on his account are **forks** of `AISquare-Studio`
   repos, not repos he owns. Confirmed with him directly — hence the framing above.
   `openrig` and `corsair` on his account are likewise forks of
-  `mvschwarz/openrig` and `corsairdev/corsair`.
+  `mvschwarz/openrig` and `corsairdev/corsair`, and `lancedb` of
+  `lancedb/lancedb`.
 - Reference site is Next.js + Turbopack; we are deliberately not matching that
   stack. Vite is lighter and matches what he already runs.
 

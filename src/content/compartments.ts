@@ -7,6 +7,8 @@ import {
   openSourceContinuedPullRequests,
   evenMoreOpenSourceNotes,
   evenMoreOpenSourcePullRequests,
+  stillMoreOpenSourceNotes,
+  stillMoreOpenSourcePullRequests,
   projects,
   pullRequests,
   type Project,
@@ -185,6 +187,17 @@ const manifest: CompartmentSpec[] = [
     posters: [
       { kind: "contributions", wall: "left", pullRequests: evenMoreOpenSourcePullRequests },
       { kind: "notice", wall: "right", heading: "Engineering notes", lines: evenMoreOpenSourceNotes },
+    ],
+  },
+  {
+    // Contributions, not ownership — lancedb is LanceDB's. A car of its own
+    // because car 07's notes plate was already full.
+    id: "still-more-open-source",
+    label: "Open source",
+    destination: "Still more open source",
+    posters: [
+      { kind: "contributions", wall: "left", pullRequests: stillMoreOpenSourcePullRequests },
+      { kind: "notice", wall: "right", heading: "Engineering notes", lines: stillMoreOpenSourceNotes },
     ],
   },
   projectCar("gitscout", "gitscout"),

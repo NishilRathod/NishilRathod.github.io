@@ -88,7 +88,8 @@ export type Contribution = {
  * Occasional contributions — NOT his projects. aisquare-cli and pipe are
  * AISquare-Studio's repos, openrig is mvschwarz's, corsair is corsairdev's,
  * headroom is headroomlabs-ai's, spec-kit is GitHub's, Windows-MCP is
- * CursorTouch's and ai-job-search is MadsLorentzen's; his own copies are forks.
+ * CursorTouch's, ai-job-search is MadsLorentzen's and lancedb is LanceDB's; his
+ * own copies are forks.
  * Presented modestly on purpose: anyone can check the commit history in thirty
  * seconds, and overclaiming here would cost more credibility than the mention
  * is worth.
@@ -134,6 +135,11 @@ export const contributions: Contribution[] = [
     href: "https://github.com/MadsLorentzen/ai-job-search",
     note: "job search framework built on Claude Code",
   },
+  {
+    name: "lancedb",
+    href: "https://github.com/lancedb/lancedb",
+    note: "embedded database for vector and hybrid search",
+  },
 ];
 
 export type PullRequest = {
@@ -145,15 +151,34 @@ export type PullRequest = {
   href: string;
   /** Month it landed, e.g. "Sep 2026". */
   merged: string;
+  /**
+   * Set when the change landed through another pull request, such as a
+   * maintainer's release squash, instead of this one's own merge. GitHub then
+   * shows this one as Closed, so the poster says "Landed via #N" rather than
+   * claiming a merge anyone can see did not happen.
+   */
+  landedVia?: number;
 };
 
 /**
  * Merged pull requests to AISquare-Studio's repos — the record behind the
  * AISquare contributions above. Merged only: an open PR is a proposal, and
  * listing it here would claim work the maintainers have not accepted. Add one
- * when it lands. Newest first.
+ * when it lands. A PR whose change landed inside another (pipe #25, in the
+ * 0.3.0 release squash #42) counts, and records that with `landedVia`; one
+ * closed in favour of different work (pipe #26, replaced by #39) does not.
+ * Newest first.
  */
 export const pullRequests: PullRequest[] = [
+  {
+    owner: "AISquare-Studio",
+    repo: "pipe",
+    number: 25,
+    title: "Resolve editable install paths from file:// URLs correctly",
+    href: "https://github.com/AISquare-Studio/pipe/pull/25",
+    merged: "Oct 2026",
+    landedVia: 42,
+  },
   {
     owner: "AISquare-Studio",
     repo: "aisquare-cli",
@@ -180,7 +205,11 @@ export const pullRequests: PullRequest[] = [
   },
 ];
 
-/** What those pull requests actually involved. Drawn only from merged work. */
+/**
+ * What those pull requests actually involved. Drawn only from merged work.
+ * The plate is full (25px to spare at 1440px; a fourth note overflowed by
+ * 127px), so pipe #25 is on the contributions plate without a note of its own.
+ */
 export const openSourceNotes: string[] = [
   "Brought up a Windows CI lane on a suite that had only ever run on Linux, fixing 35 platform-divergence failures across 65 files (PATHEXT resolution, NTFS DACLs vs POSIX mode bits, path separators, clock granularity).",
   "Replaced NTFS file-permission handling that was silently a no-op — chmod(0600) does nothing on Windows, leaving API keys and bearer tokens world-readable — with a single atomic icacls call that verifies the resulting ACL rather than trusting the exit code.",
@@ -279,4 +308,25 @@ export const evenMoreOpenSourceNotes: string[] = [
   "ai-job-search — shaped with the maintainer on the issue first; a test pins the command spec to the tool's status set.",
   "Windows-MCP — Windows finds a bare \"powershell\" on the server's PATH, not the child's, so a host that stripped it broke every PowerShell, Registry and notification call with WinError 2.",
   "Windows-MCP — reproduced through the real server over stdio with a stripped PATH: WinError 2 on main, the hostname with the fix. A failed launch now names the shell it tried.",
+];
+
+/**
+ * The fourth car's worth, for the same reason: car 07's notes plate is full.
+ * Same rule: merged only, newest first.
+ */
+export const stillMoreOpenSourcePullRequests: PullRequest[] = [
+  {
+    owner: "lancedb",
+    repo: "lancedb",
+    number: 4507,
+    title: "Add a guide for using LanceDB in VS Code extensions",
+    href: "https://github.com/lancedb/lancedb/pull/4507",
+    merged: "Oct 2026",
+  },
+];
+
+/** What those pull requests actually involved. Drawn only from merged work. */
+export const stillMoreOpenSourceNotes: string[] = [
+  "LanceDB — a docs guide to running LanceDB inside a VS Code extension: an absolute storage path (a relative one hit a read-only directory), esbuild externals for the native binary, and one VSIX per platform.",
+  "LanceDB — the page's code comes from tested snippets, and the sample extension was run in VS Code and from an unpacked VSIX. Review found hits opening in the wrong folder of a multi-root workspace; a two-folder test pins the fix.",
 ];
