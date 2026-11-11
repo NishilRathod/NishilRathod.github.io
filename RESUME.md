@@ -83,12 +83,14 @@ These must not be invented. Record answers here as they arrive.
   (MadsLorentzen). Car 07's notes plate is now full as well (5px to spare after
   trimming the #564 notes; their first wording overflowed by 28px), so since
   2026-10-29 car 08, **"Still more open source"** (`#still-more-open-source`),
-  holds LanceDB #4507 (lancedb), with 210px to spare on its notes plate. Every
-  car after each new one moved down one. Merged PRs only — obscura #848 goes on
-  only if it merges. LanceDB docs #371 never merged: the docs moved into
-  lancedb/lancedb, and the same guide merged there as #4507. Each PR records its
-  repo owner, and a car holding more than one owner shows every repo as
-  `owner/repo`.
+  holds LanceDB #4507 (lancedb) and, since 2026-11-11, nanocoder #1962
+  (Nano-Collective). Its notes plate is full too (5px to spare after trimming
+  the #1962 notes; their first wording overflowed by 94px), so the next merge
+  needs car 09. Every car after each new one moved down one. Merged PRs only —
+  obscura #848, nasiko #358 and concurrently #642 go on only if they merge.
+  LanceDB docs #371 never merged: the docs moved into lancedb/lancedb, and the
+  same guide merged there as #4507. Each PR records its repo owner, and a car
+  holding more than one owner shows every repo as `owner/repo`.
 - **No number-key jumps** since 2026-10-03, when the train passed ten cars and
   ran out of digit keys. Jumping is the line map's job: every stop on the rail at
   the bottom is a button, and hover or keyboard focus shows "Car NN · Name". The
@@ -116,8 +118,8 @@ These must not be invented. Record answers here as they arrive.
 - `aisquare-cli` and `pipe` on his account are **forks** of `AISquare-Studio`
   repos, not repos he owns. Confirmed with him directly — hence the framing above.
   `openrig` and `corsair` on his account are likewise forks of
-  `mvschwarz/openrig` and `corsairdev/corsair`, and `lancedb` of
-  `lancedb/lancedb`.
+  `mvschwarz/openrig` and `corsairdev/corsair`, `lancedb` of
+  `lancedb/lancedb`, and `nanocoder` of `Nano-Collective/nanocoder`.
 - Reference site is Next.js + Turbopack; we are deliberately not matching that
   stack. Vite is lighter and matches what he already runs.
 

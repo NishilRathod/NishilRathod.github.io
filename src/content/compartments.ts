@@ -190,8 +190,9 @@ const manifest: CompartmentSpec[] = [
     ],
   },
   {
-    // Contributions, not ownership — lancedb is LanceDB's. A car of its own
-    // because car 07's notes plate was already full.
+    // Contributions, not ownership — lancedb is LanceDB's and nanocoder is
+    // Nano-Collective's. A car of its own because car 07's notes plate was
+    // already full.
     id: "still-more-open-source",
     label: "Open source",
     destination: "Still more open source",

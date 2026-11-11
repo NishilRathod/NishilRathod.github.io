@@ -88,8 +88,8 @@ export type Contribution = {
  * Occasional contributions — NOT his projects. aisquare-cli and pipe are
  * AISquare-Studio's repos, openrig is mvschwarz's, corsair is corsairdev's,
  * headroom is headroomlabs-ai's, spec-kit is GitHub's, Windows-MCP is
- * CursorTouch's, ai-job-search is MadsLorentzen's and lancedb is LanceDB's; his
- * own copies are forks.
+ * CursorTouch's, ai-job-search is MadsLorentzen's, lancedb is LanceDB's and
+ * nanocoder is Nano-Collective's; his own copies are forks.
  * Presented modestly on purpose: anyone can check the commit history in thirty
  * seconds, and overclaiming here would cost more credibility than the mention
  * is worth.
@@ -139,6 +139,11 @@ export const contributions: Contribution[] = [
     name: "lancedb",
     href: "https://github.com/lancedb/lancedb",
     note: "embedded database for vector and hybrid search",
+  },
+  {
+    name: "nanocoder",
+    href: "https://github.com/Nano-Collective/nanocoder",
+    note: "open coding agent for the terminal",
   },
 ];
 
@@ -316,6 +321,14 @@ export const evenMoreOpenSourceNotes: string[] = [
  */
 export const stillMoreOpenSourcePullRequests: PullRequest[] = [
   {
+    owner: "Nano-Collective",
+    repo: "nanocoder",
+    number: 1962,
+    title: "Block internal IPv4 addresses inside IPv6 forms in fetch_url",
+    href: "https://github.com/Nano-Collective/nanocoder/pull/1962",
+    merged: "Nov 2026",
+  },
+  {
     owner: "lancedb",
     repo: "lancedb",
     number: 4507,
@@ -327,6 +340,8 @@ export const stillMoreOpenSourcePullRequests: PullRequest[] = [
 
 /** What those pull requests actually involved. Drawn only from merged work. */
 export const stillMoreOpenSourceNotes: string[] = [
+  "nanocoder — fetch_url's SSRF guard decoded only the ::ffff: form, so other IPv6 spellings of an internal address got through. It now parses IPv6.",
+  "nanocoder — the new tests fail on main; ten internal addresses that main allowed are now blocked.",
   "LanceDB — a docs guide to running LanceDB inside a VS Code extension: an absolute storage path (a relative one hit a read-only directory), esbuild externals for the native binary, and one VSIX per platform.",
   "LanceDB — the page's code comes from tested snippets, and the sample extension was run in VS Code and from an unpacked VSIX. Review found hits opening in the wrong folder of a multi-root workspace; a two-folder test pins the fix.",
 ];
